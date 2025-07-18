@@ -1,8 +1,11 @@
 using Blazored.LocalStorage;
+using DotNetEnv;
 using HMEye.Components;
 using HMEye.DumbAuth;
 using HMEye.ScreenWakeLock;
 using MudBlazor.Services;
+
+Env.Load();
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -19,13 +22,6 @@ Directory.CreateDirectory(appDataDir);
 builder.Services.AddDumbAuth(appDataDir);
 builder.Services.AddScoped<ScreenWakeLockService>();
 builder.Services.AddBlazoredLocalStorage();
-
-builder.WebHost.ConfigureKestrel(
-	(context, options) =>
-	{
-		options.Configure(context.Configuration.GetSection("Kestrel"));
-	}
-);
 
 var app = builder.Build();
 
