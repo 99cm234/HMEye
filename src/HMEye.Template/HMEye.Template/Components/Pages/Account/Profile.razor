@@ -1,0 +1,51 @@
+﻿@page "/account/profile"
+@attribute [Authorize]
+
+@inject UserService UserService
+@inject ThemeService ThemeService
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@rendermode InteractiveServer
+
+<MudText Typo="Typo.h5" Class="ma-4">Client Profile</MudText>
+<MudPaper Class="pa-4">
+    @if (loading)
+    {
+        <MudProgressCircular Indeterminate="true" />
+    }
+    else if (user is not null)
+    {
+		<MudList T="string" Style="max-width: 300px;">
+			<MudListItem Text="@user.UserName" Icon="@Icons.Material.Filled.Person"/>
+			<MudListItem Text="@user.Email" Icon="@Icons.Material.Filled.Email" />
+			<MudListItem Text="@user.PhoneNumber" Icon="@Icons.Material.Filled.Phone" />
+			<MudListItem Text="@user.ExpireTimeSpanMinutes.ToString()" SecondaryText="login timeout minutes" Icon="@Icons.Material.Filled.Timer" />
+		</MudList>
+    }
+    else
+    {
+        <MudAlert Severity="Severity.Warning">User not found or not authenticated.</MudAlert>
+    }
+</MudPaper>
+
+
+@code{
+	private CustomUser? user;
+	private bool loading = true;
+
+	protected override async Task OnInitializedAsync()
+	{
+		var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+		var identityUser = authState.User;
+
+		if (identityUser.Identity?.IsAuthenticated == true)
+		{
+			var userName = identityUser.Identity.Name;
+			if (userName is not null)
+			{
+				user = await UserService.GetUserByNameAsync(userName);
+			}
+			
+		}
+		loading = false;
+	}
+}

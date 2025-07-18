@@ -1,0 +1,111 @@
+﻿@using Microsoft.AspNetCore.Authorization
+@using System.ComponentModel.DataAnnotations
+@inject UserService UserService
+@inject ThemeService ThemeService
+@inject ISnackbar Snackbar;
+
+<MudDialog @bind-Visible="Visible" Options="Options" OnBackdropClick="@(() => Visible = false)" Class="bordered-dialog">
+    <TitleContent>
+        <MudText Typo="Typo.h6">Add New User</MudText>
+    </TitleContent>
+    <DialogContent>
+        <EditForm EditContext="@EditContext" OnValidSubmit="OnValidSubmit" FormName="add-user">
+            <DataAnnotationsValidator />
+            @if (EditContext.GetValidationMessages().Any())
+            {
+                <MudAlert Severity="Severity.Error" Class="mt-2">
+                    <ValidationSummary />
+                </MudAlert>
+            }
+            @if (Errors.Any())
+            {
+                <MudAlert Severity="Severity.Error" Class="mt-2">
+                    @foreach (var error in Errors)
+                    {
+                        <MudText>@error</MudText>
+                    }
+                </MudAlert>
+            }
+
+            <MudGrid>
+                <MudItem xs="12" sm="6">
+				    <MudTextField @bind-Value="Model.Username" Variant="Variant.Outlined" Label="Username"/>
+                </MudItem>
+                <MudItem xs="12" sm="6">
+                    <MudTextField @bind-Value="Model.Email" Variant="Variant.Outlined" Label="Email"/>
+                </MudItem>
+                <MudItem xs="12" sm="6">
+                    <MudTextField @bind-Value="Model.PhoneNumber" Variant="Variant.Outlined" Label="Phone Number"/>
+			    </MudItem>
+                <MudItem xs="12" sm="6">
+                    <MudTextField @bind-Value="Model.Password" Variant="Variant.Outlined" InputType="InputType.Password" Label="Password"/>
+			    </MudItem>
+                <MudItem xs="12" sm="6">
+                    <MudTextField @bind-Value="Model.ConfirmPassword" Variant="Variant.Outlined" InputType="InputType.Password" Immediate="true" For="@(() => Model.ConfirmPassword)" Label="Confirm Password"/>
+			    </MudItem>
+                <MudItem xs="12" sm="6">
+                    <MudSelect T="string" @bind-SelectedValues="Model.Roles" MultiSelection=true Variant="Variant.Outlined" Label="Roles">
+                        @foreach (var role in Roles)
+                        {
+                            <MudSelectItem T="string" Value="@role">@role</MudSelectItem>
+                        }
+                    </MudSelect>
+			    </MudItem>
+                <MudItem xs="12" sm="6">
+                    <MudSwitch T="bool"
+                                @bind-Value="Model.DarkMode"
+                                Label="Dark Mode"
+                                ThumbIcon="@(Model.DarkMode==true ? Icons.Material.Filled.DarkMode : Icons.Material.Filled.LightMode)"
+                                ThumbIconColor="Color.Secondary" />
+			    </MudItem>
+                <MudItem xs="12" sm="6">
+                    <MudSelect @bind-Value="Model.Theme" Variant="Variant.Outlined" Label="Theme">
+                        @foreach (var theme in ThemeService.Themes.Keys)
+                        {
+                            <MudSelectItem Value="@theme">@theme</MudSelectItem>
+                        }
+                    </MudSelect>
+			    </MudItem>
+                <MudItem xs="12" sm="6">
+                    <MudTextField T="int" @bind-Value="Model.ExpireTimeSpanMinutes" Variant="Variant.Outlined" InputType="InputType.Number" Label="Login Expire Minutes"/>
+			    </MudItem>
+                <MudItem xs="12">
+                    <MudStack Row Class="mb-4">
+                        <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary" FullWidth>Add</MudButton>
+                        <MudButton ButtonType="ButtonType.Reset" OnClick="OnCancel" Variant="Variant.Filled" Color="Color.Secondary" FullWidth>Cancel</MudButton>
+                    </MudStack>
+                </MudItem>
+            </MudGrid>
+        </EditForm>
+    </DialogContent>
+</MudDialog>
+
+
+
+@code {
+    [Parameter] public bool Visible { get; set; }
+    [Parameter] public EventCallback<bool> VisibleChanged { get; set; }
+    [Parameter] public DialogOptions Options { get; set; } = new();
+    [Parameter] public NewUserModel Model { get; set; } = new();
+    [Parameter] public EditContext EditContext { get; set; } = null!;
+    [Parameter] public IEnumerable<string> Roles { get; set; } = new List<string>();
+    [Parameter] public List<string> Errors { get; set; } = new();
+    [Parameter] public EventCallback OnValidSubmit { get; set; }
+    [Parameter] public EventCallback OnCancel { get; set; }
+
+
+    public class NewUserModel
+    {
+        [Required] public string Username { get; set; } = string.Empty;
+        [EmailAddress] public string? Email { get; set; }
+        [Phone] public string? PhoneNumber { get; set; }
+        [Required, MinLength(6)] public string Password { get; set; } = string.Empty;
+        [Compare(nameof(Password), ErrorMessage = "Passwords do not match.")]
+        public string ConfirmPassword { get; set; } = string.Empty;
+        [Required] public IEnumerable<string> Roles { get; set; } = [];
+        public bool DarkMode { get; set; } = true;
+        public string Theme { get; set; } = "Black";
+        public int ExpireTimeSpanMinutes { get; set; } = 60;
+    }
+
+}

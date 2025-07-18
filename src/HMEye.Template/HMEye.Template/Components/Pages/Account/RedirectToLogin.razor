@@ -1,0 +1,14 @@
+﻿@inject NavigationManager NavigationManager
+
+@code {
+    private bool _navigated = false;
+
+    protected override void OnAfterRender(bool firstRender)
+    {
+        if (firstRender && !_navigated)
+        {
+            _navigated = true;
+            NavigationManager.NavigateTo("/account/login", forceLoad: true);
+        }
+    }
+}

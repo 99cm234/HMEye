@@ -1,0 +1,23 @@
+﻿@page "/account/access-denied"
+@rendermode InteractiveServer
+@layout Components.Layout.SimpleLayout
+@using Microsoft.AspNetCore.Authorization
+@using MudBlazor
+@inject NavigationManager Navigation
+@attribute [AllowAnonymous]
+
+<MudContainer MaxWidth="MaxWidth.Small" Class="d-flex align-center justify-center" Style="min-height: calc(60vh);">
+    <MudPaper Elevation="3" Class="pa-6 ma-4" Style="width: 400px;">
+        <MudText Typo="Typo.h5" Class="mb-4" Align="Align.Center">Access Denied</MudText>
+        <MudIcon Icon="@Icons.Material.Filled.Lock" Color="Color.Error" Size="Size.Large" Class="d-flex justify-center mb-4" />
+        <MudText Typo="Typo.body1" Class="mb-4" Align="Align.Center">You do not have permission to access this page.</MudText>
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" FullWidth="true" Class="mt-2" OnClick="GoToHome">Return to Home</MudButton>
+    </MudPaper>
+</MudContainer>
+
+@code {
+    private void GoToHome()
+    {
+        Navigation.NavigateTo("/");
+    }
+}
