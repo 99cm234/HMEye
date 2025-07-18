@@ -3,6 +3,9 @@
 ##
 ## Get latest from `dotnet new gitignore`
 
+# Ignore dev certs
+*.pfx
+
 # dotenv files
 .env
 
