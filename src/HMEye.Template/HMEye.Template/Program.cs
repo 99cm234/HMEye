@@ -19,7 +19,7 @@ string appDataPath = Environment.GetFolderPath(Environment.SpecialFolder.Applica
 string appDataDir = Path.Combine(appDataPath, "HMEye");
 Directory.CreateDirectory(appDataDir);
 
-builder.Services.AddDumbAuth(appDataDir);
+builder.Services.AddDumbAuth(builder.Configuration, appDataDir);
 builder.Services.AddScoped<ScreenWakeLockService>();
 builder.Services.AddBlazoredLocalStorage();
 
@@ -34,14 +34,12 @@ if (!app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
-
+app.UseRateLimiter();
 app.UseAuthentication();
 app.UseAuthorization();
 app.UseAntiforgery();
-
 app.MapStaticAssets();
 app.MapRazorComponents<App>().AddInteractiveServerRenderMode();
-
 app.MapAuthEndpoints();
 
 app.Run();

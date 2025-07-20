@@ -1,6 +1,8 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using HMEye.DumbAuth.Models;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.RateLimiting;
 
 namespace HMEye.DumbAuth;
 
@@ -13,6 +15,7 @@ public static class AuthEndpoints
 		group
 			.MapPost(
 				"/login",
+				[EnableRateLimiting("LoginPolicy")]
 				async (
 					HttpContext context,
 					SignInManager<CustomUser> signInManager,
@@ -70,12 +73,13 @@ public static class AuthEndpoints
 		group
 			.MapPost(
 				"/logout",
+				[EnableRateLimiting("LoginPolicy")]
 				async (HttpContext context, SignInManager<CustomUser> signInManager) =>
 				{
 					await signInManager.SignOutAsync();
 					return Results.Redirect("/account/login");
 				}
 			)
-			.RequireAuthorization();
+			.AllowAnonymous();
 	}
 }

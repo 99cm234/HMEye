@@ -1,6 +1,6 @@
 ﻿using Microsoft.AspNetCore.Identity;
 
-namespace HMEye.DumbAuth;
+namespace HMEye.DumbAuth.Models;
 
 public class CustomUser : IdentityUser
 {

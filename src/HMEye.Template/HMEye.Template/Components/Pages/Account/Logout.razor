@@ -1,5 +1,4 @@
 ﻿@page "/account/logout"
-@rendermode InteractiveServer
 @layout Components.Layout.SimpleLayout
 @using Microsoft.AspNetCore.Authentication
 @using MudBlazor
@@ -37,6 +36,6 @@
 
     private void GoToHome()
     {
-        Navigation.NavigateTo("/");
+        Navigation.NavigateTo("/", forceLoad: true);
     }
 }

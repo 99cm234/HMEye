@@ -1,6 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-namespace HMEye.DumbAuth
+namespace HMEye.DumbAuth.Models
 {
 	public class LoginModel
 	{

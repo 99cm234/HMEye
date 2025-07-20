@@ -1,11 +1,15 @@
-﻿using Microsoft.AspNetCore.Identity;
+﻿using HMEye.DumbAuth.ConnectionTracking;
+using Microsoft.AspNetCore.Components.Server.Circuits;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using HMEye.DumbAuth.RateLimiting;
+using HMEye.DumbAuth.Models;
 
 namespace HMEye.DumbAuth;
 
 public static class DumbAuthExtensions
 {
-	public static IServiceCollection AddDumbAuth(this IServiceCollection services, string appDataDir)
+	public static IServiceCollection AddDumbAuth(this IServiceCollection services, IConfiguration configuration, string appDataDir)
 	{
 		// Ensure the directory exists (optional, if not guaranteed elsewhere)
 		Directory.CreateDirectory(appDataDir);
@@ -45,12 +49,13 @@ public static class DumbAuthExtensions
 		services.AddScoped<UserService>();
 		services.AddScoped<ThemeService>();
 		services.AddScoped<IdentitySeederService>();
+		services.AddSingleton<ConnectionTracker>();
+		services.AddScoped<CircuitHandler, ConnectionLimitHandler>();
+		services.AddCustomRateLimiting(configuration);
 
 		// Authorization and cascading authentication
 		services.AddAuthorization();
 		services.AddCascadingAuthenticationState();
-
-		// Register the hosted service for seeding
 		services.AddHostedService<DumbAuthInitializerService>();
 
 		return services;

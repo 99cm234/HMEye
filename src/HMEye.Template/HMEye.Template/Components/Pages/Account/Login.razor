@@ -2,6 +2,7 @@
 @rendermode InteractiveServer
 @layout Components.Layout.SimpleLayout
 @using System.ComponentModel.DataAnnotations
+@using HMEye.DumbAuth.Models
 @using Microsoft.AspNetCore.WebUtilities
 @using MudBlazor
 @inject NavigationManager Navigation
@@ -98,6 +99,9 @@
                     break;
                 case string e when e.StartsWith("Invalid input:"):
                     errorMessage = e;
+                    break;
+                case "rate-limit":
+                    errorMessage = "Too many attempts. Try again later";
                     break;
                 default:
                     errorMessage = "Invalid username or password.";

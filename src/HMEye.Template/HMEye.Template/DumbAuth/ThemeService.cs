@@ -1,4 +1,5 @@
-﻿using HMEye.DumbAuth.Themes;
+﻿using HMEye.DumbAuth.Models;
+using HMEye.DumbAuth.Themes;
 using Microsoft.AspNetCore.Identity;
 using MudBlazor;
 
