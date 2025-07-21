@@ -1,0 +1,35 @@
+﻿@page "/admin/debug"
+@using Microsoft.AspNetCore.Authorization
+@attribute [Authorize(Roles = "Admin")]
+@inject DumbAuth.ConnectionTracking.ConnectionTracker Tracker
+@implements IDisposable
+
+<PageTitle>Debug</PageTitle>
+<MudText Typo="Typo.h3" GutterBottom="true">Debug</MudText>
+
+<MudText Typo="Typo.body1">Client connections: @Tracker.Count of @Tracker.Max</MudText>
+
+@code {
+    private int _clinetCount;
+    private int _clientMaxCount;
+
+    protected override void OnInitialized()
+    {
+        _clinetCount = Tracker.Count;
+        _clientMaxCount = Tracker.Max;
+        Tracker.OnCountChanged += HandleTrackerUpdated;
+    }
+
+    private void HandleTrackerUpdated(int count, int max)
+    {
+        _clinetCount = count;
+        _clientMaxCount = max;
+        InvokeAsync(StateHasChanged);
+    }
+
+    public void Dispose()
+    {
+        Tracker.OnCountChanged -= HandleTrackerUpdated;
+    }
+
+}

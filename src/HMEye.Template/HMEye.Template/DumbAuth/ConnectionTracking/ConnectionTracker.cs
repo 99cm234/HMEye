@@ -8,6 +8,7 @@ public class ConnectionTracker
 
 	public int Count => _count;
 	public int Max => _max;
+	public event Action<int, int>? OnCountChanged;
 
 	public ConnectionTracker(IConfiguration configuration)
 	{
@@ -22,6 +23,7 @@ public class ConnectionTracker
 			if (_count >= _max)
 				return false;
 			_count++;
+			OnCountChanged?.Invoke(_count, _max);
 			return true;
 		}
 	}
@@ -31,7 +33,11 @@ public class ConnectionTracker
 		lock (_lock)
 		{
 			if (_count > 0)
+			{
 				_count--;
+				OnCountChanged?.Invoke(_count, _max);
+			}
+				
 		}
 	}
 }
