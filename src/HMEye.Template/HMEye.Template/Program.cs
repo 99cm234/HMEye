@@ -2,6 +2,7 @@ using Blazored.LocalStorage;
 using DotNetEnv;
 using HMEye.Components;
 using HMEye.DumbAuth;
+using HMEye.DumbTs;
 using HMEye.ScreenWakeLock;
 using MudBlazor.Services;
 
@@ -20,6 +21,7 @@ string appDataDir = Path.Combine(appDataPath, "HMEye");
 Directory.CreateDirectory(appDataDir);
 
 builder.Services.AddDumbAuth(builder.Configuration, appDataDir);
+builder.Services.AddDumbTsLogging(TimeSpan.FromSeconds(2), appDataDir);
 builder.Services.AddScoped<ScreenWakeLockService>();
 builder.Services.AddBlazoredLocalStorage();
 
