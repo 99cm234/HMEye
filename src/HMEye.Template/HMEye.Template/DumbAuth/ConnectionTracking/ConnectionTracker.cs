@@ -12,14 +12,15 @@ public class ConnectionTracker
 	public ConnectionTracker(IConfiguration configuration)
 	{
 		var dumbAuthConfig = configuration.GetSection("DumbAuth");
-		_max = dumbAuthConfig.GetValue<int>("ConnectionLimit:MaxClientConnections", 10);
+		_max = Math.Max(dumbAuthConfig.GetValue<int>("ConnectionLimit:MaxClientConnections", 10), 1);
 	}
 
 	public bool TryAdd()
 	{
 		lock (_lock)
 		{
-			if (_count >= _max) return false;
+			if (_count >= _max)
+				return false;
 			_count++;
 			return true;
 		}
@@ -29,7 +30,8 @@ public class ConnectionTracker
 	{
 		lock (_lock)
 		{
-			if (_count > 0) _count--;
+			if (_count > 0)
+				_count--;
 		}
 	}
 }
