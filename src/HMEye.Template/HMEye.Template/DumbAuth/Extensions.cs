@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using HMEye.DumbAuth.RateLimiting;
 using HMEye.DumbAuth.Models;
+using HMEye.DumbAuth.SessionTracker;
 
 namespace HMEye.DumbAuth;
 
@@ -50,6 +51,7 @@ public static class DumbAuthExtensions
 		services.AddScoped<ThemeService>();
 		services.AddScoped<IdentitySeederService>();
 		services.AddSingleton<ConnectionTracker>();
+		services.AddSingleton<UserSessionTracker>();
 		services.AddScoped<CircuitHandler, ConnectionLimitHandler>();
 		services.AddCustomRateLimiting(configuration);
 
