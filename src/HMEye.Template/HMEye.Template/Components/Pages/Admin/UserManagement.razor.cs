@@ -5,7 +5,7 @@ using MudBlazor;
 
 namespace HMEye.Components.Pages.Admin;
 
-public partial class Users
+public partial class UserManagement
 {
 	private List<CustomUser>? users;
 	private List<string> roles = new();
