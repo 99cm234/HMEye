@@ -9,6 +9,8 @@
 
 
   <ItemGroup>
+	<PackageReference Include="Beckhoff.TwinCAT.Ads" Version="6.2.467" />
+	<PackageReference Include="Beckhoff.TwinCAT.TcEventLoggerAdsProxy.Net" Version="2.8.33" />
 	<PackageReference Include="Blazored.LocalStorage" Version="4.5.0" />
 	<PackageReference Include="DotNetEnv" Version="3.1.1" />
 	<PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="9.0.7" />
