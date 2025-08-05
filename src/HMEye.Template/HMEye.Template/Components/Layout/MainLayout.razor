@@ -1,0 +1,187 @@
+﻿@inherits LayoutComponentBase
+@implements IAsyncDisposable
+@inject ISnackbar Snackbar
+@inject AuthenticationStateProvider AuthStateProvider
+@inject UserManager<CustomUser> UserManager
+@inject ThemeService ThemeService
+@inject NavigationManager Navigation
+@inject ScreenWakeLockService WakeLock
+@inject Blazored.LocalStorage.ILocalStorageService LocalStorage
+@inject IJSRuntime JS
+@using HMEye.DumbAuth.Models
+@using ScreenWakeLock
+
+<MudThemeProvider Theme="@_theme" IsDarkMode="_isDarkMode" />
+<MudPopoverProvider />
+<MudDialogProvider />
+<MudSnackbarProvider />
+<MudLayout>
+    <MudAppBar Elevation="1">
+        @* <MudIconButton Icon="@Icons.Material.Filled.Menu" Color="Color.Inherit" Edge="Edge.Start" OnClick="@((e) => DrawerToggle())" /> *@
+        <MudImage Src="icons/eyeball-button-512.png" Width="50" Height="50" @onclick="@((e) => DrawerToggle())" />
+        <MudText Typo="Typo.h5" Class="ml-3">HMEye.Template</MudText>
+        <MudSpacer />
+        <MudMenu Icon="@Icons.Material.Filled.MoreHoriz">
+            <MudMenuItem OnClick="@DarkModeToggle" Label="@(_isDarkMode ? "Light Mode" : "Dark Mode")" Icon="@DarkLightModeMenuIcon" />
+            <MudMenu Label="Theme" StartIcon="@Icons.Material.Filled.Brush">
+                @foreach (var theme in ThemeService.Themes.Keys)
+                {
+                    <MudMenuItem OnClick="() => OnThemeChanged(theme)" Label="@theme" Icon="@Icons.Material.Filled.Brush" IconColor="@(theme == _selectedTheme ? Color.Tertiary : Color.Dark)" />
+                }
+            </MudMenu>
+            @if (_wakeLockSupported)
+            {
+                <MudMenuItem OnClick="@ToggleWakeLock" Label="@(_wakeLockEnabled ? "Screen On" : "Keep Screen On")" Icon="@WakeLockModeMenuIcon" />
+            }
+        </MudMenu>
+    </MudAppBar>
+    <MudDrawer id="nav-drawer" @bind-Open="_drawerOpen" ClipMode="DrawerClipMode.Always" Elevation="2">
+        <NavMenu />
+    </MudDrawer>
+    <MudMainContent Class="pt-16 pa-4">
+        @Body
+    </MudMainContent>
+</MudLayout>
+
+
+<div id="blazor-error-ui" data-nosnippet>
+    An unhandled error has occurred.
+    <a href="." class="reload">Reload</a>
+    <span class="dismiss">🗙</span>
+</div>
+
+@code {
+    private bool _drawerOpen = true;
+    private bool _isDarkMode = true;
+    private MudTheme? _theme = null;
+    private string _selectedTheme = "Default";
+    private CustomUser? _currentUser;
+    private bool _wakeLockSupported;
+    private bool _wakeLockEnabled;
+    private DotNetObjectReference<MainLayout>? _objRef;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+        _currentUser = await UserManager.GetUserAsync(authState.User);
+
+        if (_currentUser != null)
+        {
+            _isDarkMode = _currentUser.DarkMode;
+            _selectedTheme = _currentUser.Theme ?? "Default";
+            _theme = ThemeService.GetTheme(_currentUser);
+        }
+        else
+        {
+            _isDarkMode = true;
+            _theme = ThemeService.GetTheme("Default");
+        }
+
+        await InvokeAsync(StateHasChanged);
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            _wakeLockSupported = await WakeLock.IsSupportedAsync();
+            _wakeLockEnabled = await LocalStorage.GetItemAsync<bool>("WakeLockEnabled");
+
+            if (_wakeLockEnabled && _wakeLockSupported)
+            {
+                await WakeLock.RequestWakeLockAsync();
+            }
+
+            _objRef = DotNetObjectReference.Create(this);
+            await JS.InvokeVoidAsync("visibilityHandler.initialize", _objRef);
+        }
+    }
+
+    private void DrawerToggle()
+    {
+        _drawerOpen = !_drawerOpen;
+    }
+
+    private async Task DarkModeToggle()
+    {
+        _isDarkMode = !_isDarkMode;
+
+        if (_currentUser != null)
+        {
+            await ThemeService.UpdateUserThemeAsync(UserManager, _currentUser, _selectedTheme, _isDarkMode);
+        }
+
+        await InvokeAsync(StateHasChanged);
+    }
+
+    private async Task OnThemeChanged(string value)
+    {
+        _selectedTheme = value;
+
+        if (_currentUser != null)
+        {
+            await ThemeService.UpdateUserThemeAsync(UserManager, _currentUser, _selectedTheme, _isDarkMode);
+            var fetchedTheme = ThemeService.GetTheme(_selectedTheme);
+            if (fetchedTheme is not null)
+                _theme = fetchedTheme;
+        }
+
+        await InvokeAsync(StateHasChanged);
+    }
+
+    [JSInvokable]
+    public async Task OnVisibilityChanged()
+    {
+        Console.WriteLine("Visibility changed");
+        if (_wakeLockEnabled && _wakeLockSupported)
+        {
+            await WakeLock.RequestWakeLockAsync();
+        }
+    }
+
+    private async Task ToggleWakeLock()
+    {
+        try
+        {
+            if (_wakeLockEnabled)
+            {
+                await WakeLock.ReleaseWakeLockAsync();
+                _wakeLockEnabled = false;
+                Snackbar.Add("System screen timeout mode enabled", Severity.Info);
+            }
+            else
+            {
+                await WakeLock.RequestWakeLockAsync();
+                _wakeLockEnabled = true;
+                Snackbar.Add("Screen timeout is disabled", Severity.Info);
+            }
+
+            await LocalStorage.SetItemAsync("WakeLockEnabled", _wakeLockEnabled);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Error in Screen Wake Lock Toggle: {ex.Message}", Severity.Error);
+        }
+    }
+
+    public string DarkLightModeMenuIcon => _isDarkMode switch
+    {
+        true => Icons.Material.Filled.LightMode,
+        false => Icons.Material.Filled.DarkMode,
+    };
+
+    public string WakeLockModeMenuIcon => _wakeLockEnabled switch
+    {
+        true => Icons.Material.Filled.CheckBox,
+        false => Icons.Material.Filled.CheckBoxOutlineBlank,
+    };
+
+    public async ValueTask DisposeAsync()
+    {
+        await WakeLock.ReleaseWakeLockAsync();
+        _wakeLockEnabled = false;
+        _objRef?.Dispose();
+    }
+}
+
+

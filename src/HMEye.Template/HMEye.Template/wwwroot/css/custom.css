@@ -1,0 +1,3 @@
+﻿.bordered-dialog {
+    border: 1px solid var(--mud-palette-tertiary) !important;
+}

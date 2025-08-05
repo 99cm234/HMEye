@@ -1,0 +1,93 @@
+﻿@using Microsoft.AspNetCore.Authorization
+@using System.ComponentModel.DataAnnotations
+@inject UserService UserService
+@inject ThemeService ThemeService
+
+<MudDialog @bind-Visible="Visible" Options="Options" Class="bordered-dialog">
+    <TitleContent>
+        <MudText Typo="Typo.h6">Edit User @Model.Username</MudText>
+    </TitleContent>
+    <DialogContent>
+        <EditForm EditContext="EditContext" OnValidSubmit="OnValidSubmit" FormName="edit-user">
+            <DataAnnotationsValidator />
+            @if (EditContext.GetValidationMessages().Any())
+            {
+                <MudAlert Severity="Severity.Error" Class="mt-2">
+                    <ValidationSummary />
+                </MudAlert>
+            }
+            @if (Errors.Any())
+            {
+                <MudAlert Severity="Severity.Error" Class="mt-2">
+                    @foreach (var error in Errors)
+                    {
+                        <MudText>@error</MudText>
+                    }
+                </MudAlert>
+            }
+            <MudGrid>
+                <MudItem xs="12" sm="6">
+                    <MudTextField @bind-Value="Model.Email" Variant="Variant.Outlined" Label="Email" />
+                </MudItem>
+                <MudItem xs="12" sm="6">
+                    <MudTextField @bind-Value="Model.PhoneNumber" Variant="Variant.Outlined" Label="Phone Number" />
+                </MudItem>
+                <MudItem xs="12" sm="6">
+                    <MudSelect T="string" @bind-SelectedValues="Model.Roles" MultiSelection=true Variant="Variant.Outlined" Label="Roles">
+                        @foreach (var role in Roles)
+                        {
+                            <MudSelectItem T="string" Value="@role">@role</MudSelectItem>
+                        }
+                    </MudSelect>
+                </MudItem>
+                <MudItem xs="12" sm="6">
+                    <MudSwitch T="bool"
+                        @bind-Value="Model.DarkMode"
+                        Label="Dark Mode"
+                        ThumbIcon="@(Model.DarkMode==true ? Icons.Material.Filled.DarkMode : Icons.Material.Filled.LightMode)" 
+                        ThumbIconColor="Color.Secondary"/>
+                </MudItem>
+                <MudItem xs="12" sm="6">
+                    <MudSelect @bind-Value="Model.Theme" Variant="Variant.Outlined" Label="Theme">
+                        @foreach (var theme in ThemeService.Themes.Keys)
+                        {
+                            <MudSelectItem Value="@theme">@theme</MudSelectItem>
+                        }
+                    </MudSelect>
+                </MudItem>
+                <MudItem xs="12" sm="6">
+                    <MudTextField T="int" @bind-Value="Model.ExpireTimeSpanMinutes" Variant="Variant.Outlined" InputType="InputType.Number" Label="Login Expire Minutes" />
+                </MudItem>
+                <MudItem xs="12">
+                    <MudStack Row Class="mb-4">
+                        <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary" FullWidth>Save</MudButton>
+                        <MudButton Variant="Variant.Filled" Color="Color.Secondary" OnClick="OnCancel" FullWidth>Cancel</MudButton>
+                    </MudStack>
+                </MudItem>
+            </MudGrid>
+        </EditForm>
+    </DialogContent>
+</MudDialog>
+
+@code {
+    [Parameter] public bool Visible { get; set; }
+    [Parameter] public EventCallback<bool> VisibleChanged { get; set; }
+    [Parameter] public DialogOptions Options { get; set; } = new();
+    [Parameter] public EditUserModel Model { get; set; } = new();
+    [Parameter] public EditContext EditContext { get; set; } = null!;
+    [Parameter] public IEnumerable<string> Roles { get; set; } = [];
+    [Parameter] public List<string> Errors { get; set; } = new();
+    [Parameter] public EventCallback OnValidSubmit { get; set; }
+    [Parameter] public EventCallback OnCancel { get; set; }
+
+    public class EditUserModel
+    {
+        public string Username { get; set; } = string.Empty;
+        [EmailAddress] public string? Email { get; set; }
+        [Phone] public string? PhoneNumber { get; set; }
+        [Required] public IEnumerable<string> Roles { get; set; } = [];
+        public bool DarkMode { get; set; }
+        public string Theme { get; set; } = string.Empty;
+        public int ExpireTimeSpanMinutes { get; set; }
+    }
+}

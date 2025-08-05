@@ -1,0 +1,24 @@
+﻿@page "/account/server-full"
+@layout Components.Layout.SimpleLayout
+@using Microsoft.AspNetCore.Authentication
+@using MudBlazor
+@inject NavigationManager Navigation
+@attribute [AllowAnonymous]
+
+<MudContainer MaxWidth="MaxWidth.Small" Class="d-flex align-center justify-center" Style="min-height: 60vh;">
+    <MudPaper Elevation="3" Class="pa-6 ma-4" Style="width: 400px;">
+        <MudStack AlignItems="AlignItems.Center" Justify="Justify.Center" Class="mb-4">
+			<MudIcon Icon="@Icons.Material.Filled.Computer" Size="Size.Large" Color="Color.Error" />
+			<MudText Typo="Typo.h5" Class="mb-2">Server at Capacity</MudText>
+            <MudText Typo="Typo.body1" Class="mb-4" Align="Align.Center">Max client count reached. Try later.</MudText>
+        </MudStack>
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Refresh" FullWidth="true" Class="mt-2" OnClick="GoToHome">Retry</MudButton>
+    </MudPaper>
+</MudContainer>
+
+@code {
+    private void GoToHome()
+    {
+        Navigation.NavigateTo("/", forceLoad: true);
+    }
+}
