@@ -77,7 +77,7 @@ namespace HMEye.TwincatServices
 		/// <exception cref="TimeoutException">Thrown when the operation times out.</exception>
 		/// <exception cref="OperationCanceledException">Thrown when the operation is canceled.</exception>
 		/// <exception cref="Exception">Thrown when an unexpected error occurs.</exception>
-		Task<T> ReadVariableAsync<T>(string variableName, CancellationToken cancellationToken = default);
+		Task<T> ReadAsync<T>(string variableName, CancellationToken cancellationToken = default);
 
 		/// <summary>
 		/// Writes a variable to the PLC.
@@ -95,39 +95,39 @@ namespace HMEye.TwincatServices
 		/// <exception cref="TimeoutException">Thrown when the operation times out.</exception>
 		/// <exception cref="OperationCanceledException">Thrown when the operation is canceled.</exception>
 		/// <exception cref="Exception">Thrown when an unexpected error occurs.</exception>
-		Task WriteVariableAsync<T>(string variableName, T value, CancellationToken cancellationToken = default);
+		Task WriteAsync<T>(string variableName, T value, CancellationToken cancellationToken = default) where T : notnull;
 
 		/// <summary>
-		/// Reads an array from the PLC.
-		/// </summary>		
-		/// <typeparam name="T">The type of the array elements.</typeparam>
-		/// <param name="arrayName">The name of the PLC array to read, e.g., "MAIN.myArray".</param>
+		/// Reads a variable from the PLC using SymbolLoaderFactorty in Dynamic mode.
+		/// </summary>
+		/// <typeparam name="T">The type of the variable to read. Ensure that the PLC and .NET data types are compatible.</typeparam>
+		/// <param name="variableName">The name of the PLC variable to read, e.g., "MAIN.myInt".</param>
 		/// <param name="cancellationToken">The cancellation token to cancel the operation.</param>
-		/// <returns>A task that resolves to the array values as an array of type <typeparamref name="T"/>.</returns>
-		/// <exception cref="KeyNotFoundException">Thrown when the array is not found in the PLC symbols.</exception>
-		/// <exception cref="InvalidOperationException">Thrown when the symbol is not an array or reading fails.</exception>
+		/// <returns>A task that resolves to the value of the PLC variable as type <typeparamref name="T"/>.</returns>
+		/// <exception cref="KeyNotFoundException">Thrown when the variable is not found in the PLC symbols.</exception>
+		/// <exception cref="InvalidOperationException">Thrown when reading the variable fails.</exception>
 		/// <exception cref="AdsErrorException">Thrown when an ADS-specific error occurs.</exception>
 		/// <exception cref="TimeoutException">Thrown when the operation times out.</exception>
 		/// <exception cref="OperationCanceledException">Thrown when the operation is canceled.</exception>
 		/// <exception cref="Exception">Thrown when an unexpected error occurs.</exception>
-		Task<T[]> ReadArrayAsync<T>(string arrayName, CancellationToken cancellationToken = default);
+		Task<T> ReadDynamicAsync<T>(string variableName, CancellationToken cancellationToken = default);
 
 		/// <summary>
-		/// Writes an array to the PLC.
-		/// TwinCAT arrays are fixed length: Length of array to be written must be equal to or shorter than the PLC array length.
+		/// Writes a variable to the PLC using SymbolLoaderFactorty in Dynamic mode.
 		/// </summary>
-		/// <typeparam name="T">The type of the array elements.</typeparam>
-		/// <param name="arrayName">The name of the PLC array to write, e.g., "MAIN.myArray".</param>
-		/// <param name="values">The values to write to the PLC array.</param>
+		/// <typeparam name="T">The type of the variable to write. Ensure that the PLC and .NET data types are compatible.</typeparam>
+		/// <param name="variableName">The name of the PLC variable to write, e.g., "MAIN.myInt".</param>
+		/// <param name="value">The value to write to the PLC variable.</param>
 		/// <param name="cancellationToken">The cancellation token to cancel the operation.</param>
 		/// <returns>A task representing the asynchronous write operation.</returns>
-		/// <exception cref="KeyNotFoundException">Thrown when the array is not found in the PLC symbols.</exception>
-		/// <exception cref="InvalidOperationException">Thrown when the symbol is not an array, element type is null, or writing fails.</exception>
-		/// <exception cref="ArgumentException">Thrown when the array size mismatches or a string element exceeds the maximum length.</exception>
+		/// <exception cref="KeyNotFoundException">Thrown when the variable is not found in the PLC symbols.</exception>
+		/// <exception cref="ArgumentNullException">Thrown when <paramref name="value"/> is null.</exception>
+		/// <exception cref="ArgumentException">Thrown when a string value exceeds the maximum allowed length.</exception>
+		/// <exception cref="InvalidOperationException">Thrown when writing the variable fails or data type is invalid.</exception>
 		/// <exception cref="AdsErrorException">Thrown when an ADS-specific error occurs.</exception>
 		/// <exception cref="TimeoutException">Thrown when the operation times out.</exception>
 		/// <exception cref="OperationCanceledException">Thrown when the operation is canceled.</exception>
 		/// <exception cref="Exception">Thrown when an unexpected error occurs.</exception>
-		Task WriteArrayAsync<T>(string arrayName, T[] values, CancellationToken cancellationToken = default);
+		Task WriteDynamicAsync<T>(string variableName, T value, CancellationToken cancellationToken = default) where T : notnull;
 	}
 }

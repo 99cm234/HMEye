@@ -13,11 +13,15 @@ builder.Services.AddTwincatServices(builder.Configuration);
 
 ## Configuring PlcDataCache
 
-The `PlcDataCache` is configured via the `PlcDataCacheConfigProvider` class, which defines a collection of `CacheItemConfig` objects specifying the PLC variables to cache at startup. To modify the initial cache items, update the `GetCacheItemConfigs` method in `PlcDataCacheConfigProvider.cs`. This approach provides type safety and IntelliSense support, making it easy to manage large lists of variables.
+The `PlcDataCache` can be configured in 3 different ways.
+
+1. `PlcDataCacheConfigProvider`: A manually defined collection of `CacheItemConfig` objects that are passed to `PlcDataCache` on startup.
+2. `PlcDataCache.AddConfigItem()`: Accepts a `CacheItemConfig` at any point during run and uses it to add a Cache Item.
+3. `PlcDataCacheConfigLoader`: Automatically scans PLC for symbols with particular custom attributes to create a collection of `CacheItemConfig` objects and pass it to `PlcDataCache` using the same mechamism as `PlcDataCacheConfigProvider`. To use both config methods in one project, resulting `CacheItemConfig` collections must be combined.
 
 If no configurations are provided in `PlcDataCacheConfigProvider`, no variables will be cached by default.
 
-### Example Configuration in `PlcDataCacheConfigProvider.cs`
+### Configuration using `PlcDataCacheConfigProvider.cs`
 
 ```csharp
 namespace HMEye.TwincatServices
@@ -51,9 +55,9 @@ namespace HMEye.TwincatServices
                 new CacheItemConfig
                 {
                     Address = "MAIN.valuesArray",
-                    Type = typeof(int),  // Element type for int[]
+                    Type = typeof(int),  // Element type for int[]. Array lengths must match.
                     IsArray = true,
-                    PollInterval = 2000
+                    PollInterval = 5000
                 }
             };
         }
@@ -61,88 +65,114 @@ namespace HMEye.TwincatServices
 }
 ```
 
-### Configuring Array Variables
-
-`PlcDataCache` supports caching of array variables. To configure an array, set the `IsArray` property to `true` in the `CacheItemConfig` and specify the element type in the `Type` property. For example, for an array of integers:
-
-```csharp
-new CacheItemConfig
-{
-    Address = "MAIN.valuesArray",
-    Type = typeof(int),  // Element type
-    IsArray = true,
-    PollInterval = 2000
-}
-```
-
 When accessing the array, use the array type in the generic methods, e.g., `ReadImmediateAsync<int[]>("MAIN.valuesArray")`.
 
-### Dynamic Cache Management
+### Configuration using `PlcDataCache.AddConfigItem()`
 
 `PlcDataCache` supports adding and removing cache items at runtime using the `AddCacheItem` and `RemoveCacheItem` methods.
 
-- **`AddCacheItem(CacheItemConfig config)`**  
-  Adds a new cache item to the cache.  
-  - **Parameters**: `config` - Configuration with address, type, poll interval, etc.  
-  - **Throws**:  
-    - `ArgumentNullException` if `config` is null.  
-    - `InvalidOperationException` if the address already exists.  
-    - `Exception` if item creation fails (e.g., invalid type).  
-  - **Note**: New items are polled in the next polling cycle.
+- `AddCacheItem(CacheItemConfig config)` Adds a new cache item to the cache at any point during run. Can be used to cache custom structs without the use of dynamic typing that is required if structs are cached automatically using `PlcDataCacheConfigLoader`.
 
-- **`RemoveCacheItem(string address)`**  
-  Removes a cache item by its address.  
-  - **Parameters**: `address` - The address of the item to remove.  
-  - **Throws**: `ArgumentException` if `address` is null or empty.  
-  - **Note**: If the address doesn’t exist, the method does nothing silently.
+- `RemoveCacheItem(string address)` Removes a cache item by address at any point during run.
 
-**Usage Example**:
 ```csharp
 var cache = serviceProvider.GetService<IPlcDataCache>();
-var config = new CacheItemConfig
+
+[StructLayout(LayoutKind.Sequential)]
+public struct MyPlcStruct
 {
-    Address = "MAIN.newVariable",
-    Type = typeof(int),
-    PollInterval = 1000,
-    IsReadOnly = false
+    public float Temperature; // Maps to REAL
+    public int Pressure;      // Maps to DINT
+}
+
+IEnumerable<CacheItemConfig> configs = new List<CacheItemConfig>
+{
+    new CacheItemConfig
+    {
+        Address = "MAIN.plcStruct",
+        Type = typeof(MyPlcStruct),
+        PollInterval = 1000,
+        IsReadOnly = false
+    },
+    new CacheItemConfig
+    {
+        Address = "MAIN.anotherVariable",
+        Type = typeof(double),
+        PollInterval = 500,
+        IsReadOnly = true
+    }
 };
-cache.AddCacheItem(config);
-cache.RemoveCacheItem("MAIN.newVariable");
+
+foreach (var config in configs)
+{
+    cache.AddCacheItem(config);
+}
+
+cache.RemoveCacheItem("MAIN.anotherVariable");
 ```
 
-**Important Notes**:
-- Newly added items may not be polled until the next polling cycle.
-- Removed items might be polled once more if removal occurs during a cycle.
-- All operations are thread-safe due to the use of `ConcurrentDictionary`.
+### Configuration using PlcDataCacheConfigLoader
+
+- Automatically generates `CacheItemConfig` objects by scanning PLC for symbols with custom attributes.
+- Case insensitive.
+- Polling of "due" items is done every 100 milliseconds, so for example an item with a polling interval of 250 will be polled every 300 milliseconds.
+- Symbols with `{attribute 'hmeye'}` but no specified polling frequency will be polled every 1000 msec.
+
+Example of an attribute to be added to cache and polled every 500 msec. `readonly` disallows writing a new value.
+```
+{attribute 'hmeye':='500'}
+{attribute 'readonly':='true'}
+temperature     : LREAL;
+```
+
+Example of a functon block that has all it's symbols added to cache and polled every 200 msec.
+```
+{attribute 'hmeye':='200'}
+fbPump     : FB_PumpStation
+```
+
 
 ## TwinCAT to .NET Data Type Mapping
 
-Below is a chart of commonly used TwinCAT data types and their equivalent .NET types, useful for configuring `CacheItemConfig` in `PlcDataCacheConfigProvider`.
-
 ```
-+--------------------+-----------------------------+
-| TwinCAT Data Type  | .NET Equivalent             |
-+--------------------+-----------------------------+
-| BOOL               | bool                        |
-| BYTE               | byte                        |
-| SINT               | sbyte                       |
-| INT                | short                       |
-| DINT               | int                         |
-| LINT               | long                        |
-| REAL               | float                       |
-| LREAL              | double                      |
-| STRING             | string                      |
-| TIME               | uint / TimeSpan             |
-| DATE               | DateTime                    |
-| TOD (TimeOfDay)    | TimeSpan                    |
-+--------------------+-----------------------------+
++--------------------+-----------------------------+---------------------------------------------------+
+| TwinCAT Data Type  | .NET Equivalent             | Notes                                             |
++--------------------+-----------------------------+---------------------------------------------------+
+| BOOL               | bool                        |                                                   |
+| BYTE               | byte                        | Unsigned 8-bit                                    |
+| SINT               | sbyte                       | Signed 8-bit                                      |
+| USINT              | byte                        | Alias of BYTE, explicitly unsigned                |
+| WORD               | ushort                      | Unsigned 16-bit                                   |
+| INT                | short                       | Signed 16-bit                                     |
+| UINT               | ushort                      | Unsigned 16-bit                                   |
+| DWORD              | uint                        | Unsigned 32-bit                                   |
+| DINT               | int                         | Signed 32-bit                                     |
+| UDINT              | uint                        | Unsigned 32-bit                                   |
+| LWORD              | ulong                       | Unsigned 64-bit                                   |
+| LINT               | long                        | Signed 64-bit                                     |
+| ULINT              | ulong                       | Unsigned 64-bit                                   |
+| REAL               | float                       | 32-bit floating point (IEEE 754 single-precision) |
+| LREAL              | double                      | 64-bit floating point (IEEE 754 double-precision) |
+| STRING             | string                      | ASCII (or UTF-8 in newer versions)                |
+| WSTRING            | string                      | UTF-16 (wide characters)                          |
+| TIME               | TimeSpan                    | Duration (32-bit milliseconds on the wire)        |
+| LTIME              | TimeSpan                    | 64-bit high-resolution duration; converted to .NET ticks (100ns resolution) |
+| DATE               | DateOnly                    | Date only                                         |
+| LDATE              | DateOnly                    | Extended range date only                          |
+| TOD (TimeOfDay)    | TimeOnly                    | Time since midnight                               |
+| LTOD               | TimeOnly                    | Extended range time of day                        |
+| DT (DateAndTime)   | DateTime                    | Full date and time                                |
+| LDT                | DateTime                    | Extended range full date and time                 |
+| FILETIME           | DateTime                    | Windows FILETIME (100ns intervals since 1601-01-01 UTC) |
++--------------------+-----------------------------+---------------------------------------------------+
+
 ```
 
 **Note**: Arrays of the above types are supported. Set `IsArray` to `true` and specify the element type in `Type`.
 
 ## Accessing Non-Cached PLC Operations
 
-For PLC operations that are not frequently accessed and thus not cached, you can directly use the `TwincatPlcService` instance. This includes methods like `ReadDeviceStateAsync`, `PlcCommandAsync`, and events like `ConnectionSuccess` and `ConnectionLost`. Since these are expected to be used infrequently, direct access is safe and efficient.
+For PLC operations that are not frequently accessed and not cached, you can directly use the `TwincatPlcService` instance.
 
 ## Appsettings.json Example
 

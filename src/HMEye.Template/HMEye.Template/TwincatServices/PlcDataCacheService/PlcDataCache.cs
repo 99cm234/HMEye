@@ -1,4 +1,5 @@
 ﻿using System.Collections.Concurrent;
+using TwinCAT.Ads;
 
 namespace HMEye.TwincatServices
 {
@@ -36,10 +37,21 @@ namespace HMEye.TwincatServices
 
 		private static ICacheItem CreateCacheItem(CacheItemConfig config, IPlcService plcService)
 		{
-			if (config.IsArray)
+			if (config.IsDynamic)
 			{
-				var elementType = config.Type;
-				var cacheItemType = typeof(CacheItemArray<>).MakeGenericType(elementType);
+				var cacheItemType = typeof(CacheItemDynamic<>).MakeGenericType(config.Type);
+				return (ICacheItem)
+					Activator.CreateInstance(
+						cacheItemType,
+						config.Address,
+						config.PollInterval,
+						plcService,
+						config.IsReadOnly
+					)!;
+			}
+			else if (config.IsArray)
+			{
+				var cacheItemType = typeof(CacheItem<>).MakeGenericType(config.Type);
 				return (ICacheItem)
 					Activator.CreateInstance(
 						cacheItemType,
@@ -98,9 +110,9 @@ namespace HMEye.TwincatServices
 						await operation.ExecuteAsync(_plcService, default);
 						if (_cacheItems.TryGetValue(operation.Address, out var item))
 						{
-							var value = operation.GetType().GetProperty("Value")!.GetValue(operation);
+							var value = operation.Value;
 							if (value != null)
-								await item.SetValueAsync(value);
+								await item.SetAsync(value);
 						}
 						if ((_writeQueue.Count < 50) && _error)
 							ClearError();
@@ -160,7 +172,7 @@ namespace HMEye.TwincatServices
 		public WriteResult TryWriteQueue<T>(string address, T value)
 			where T : notnull
 		{
-			if (_cacheItems.TryGetValue(address, out var item) && item.Type == typeof(T))
+			if (_cacheItems.TryGetValue(address, out var item) && item.Type.IsAssignableFrom(typeof(T)))
 			{
 				if (item.IsReadOnly)
 					return new WriteResult(false, $"Variable {address} is read-only");
@@ -191,14 +203,14 @@ namespace HMEye.TwincatServices
 		public async Task<WriteResult> TryWriteImmediateAsync<T>(string address, T value)
 			where T : notnull
 		{
-			if (_cacheItems.TryGetValue(address, out var item) && item.Type == typeof(T))
+			if (_cacheItems.TryGetValue(address, out var item) && item.Type.IsAssignableFrom(typeof(T)))
 			{
 				if (item.IsReadOnly)
 					return new WriteResult(false, $"Variable {address} is read-only");
 
 				try
 				{
-					await item.SetValueAsync(value);
+					await item.SetAsync(value);
 					return new WriteResult(true);
 				}
 				catch (Exception ex)
@@ -297,10 +309,37 @@ namespace HMEye.TwincatServices
 			}
 		}
 
-		public Task StartAsync(CancellationToken cts)
+		private void OnConnectionLost(object? sender, EventArgs args)
 		{
+			SetError($"Ads connection lost", new AdsErrorException());
+		}
+
+		private void OnConnectionSuccess(object? sender, EventArgs args)
+		{
+			ResetError();
+		}
+
+		public async Task StartAsync(CancellationToken cts)
+		{
+			// validate cache items list
+			foreach (var item in _cacheItems.Values)
+			{
+				try
+				{
+					await item.GetAsync();
+				}
+				catch (Exception ex) when (ex is not OperationCanceledException)
+				{
+					throw new InvalidOperationException(
+						$"Variable: {item.Address} failed initial symbol validation.",
+						ex
+					);
+				}
+			}
+
 			_pollingTimer = new Timer(PollPlcValues, null, _basePollingInterval, _basePollingInterval);
-			return Task.CompletedTask;
+			_plcService.ConnectionLost += OnConnectionLost;
+			_plcService.ConnectionSuccess += OnConnectionSuccess;
 		}
 
 		public Task StopAsync(CancellationToken cts)
@@ -312,6 +351,8 @@ namespace HMEye.TwincatServices
 		public void Dispose()
 		{
 			_pollingTimer?.Dispose();
+			_plcService.ConnectionLost -= OnConnectionLost;
+			_plcService.ConnectionSuccess -= OnConnectionSuccess;
 		}
 	}
 }

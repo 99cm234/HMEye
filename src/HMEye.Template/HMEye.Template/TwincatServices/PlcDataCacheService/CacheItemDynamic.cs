@@ -1,9 +1,11 @@
-﻿namespace HMEye.TwincatServices;
+﻿using HMEye.TwincatServices.PlcDataCacheService;
 
-public class CacheItem<T> : ICacheItem where T : notnull
+namespace HMEye.TwincatServices;
+
+public class CacheItemDynamic<T> : ICacheItem
 {
 	public string Address { get; }
-	public Type Type => typeof(T);
+	public Type Type => typeof(object);
 	private readonly object _lock = new();
 	private object? _value;
 	public object? Value
@@ -26,12 +28,11 @@ public class CacheItem<T> : ICacheItem where T : notnull
 	public DateTime LastUpdated { get; private set; }
 	public int? PollInterval { get; }
 	public bool IsReadOnly { get; }
+	public bool IsDynamic => true;
 	public bool IsArray => false;
-	public bool IsDynamic => false;
-
 	private readonly IPlcService _plcService;
 
-	public CacheItem(string address, int? pollInterval, IPlcService plcService, bool isReadOnly = false)
+	public CacheItemDynamic(string address, int? pollInterval, IPlcService plcService, bool isReadOnly = false)
 	{
 		Address = address ?? throw new ArgumentNullException(nameof(address));
 		PollInterval = pollInterval;
@@ -41,7 +42,7 @@ public class CacheItem<T> : ICacheItem where T : notnull
 
 	public async Task GetAsync()
 	{
-		var newValue = await _plcService.ReadAsync<T>(Address);
+		var newValue = await _plcService.ReadDynamicAsync<T>(Address);
 		lock (_lock)
 		{
 			_value = newValue;
@@ -75,8 +76,6 @@ public class CacheItem<T> : ICacheItem where T : notnull
 
 	public IWriteOperation CreateWriteOperation(object value)
 	{
-		if (value is not T typedValue)
-			throw new ArgumentException($"Value must be of type {typeof(T).FullName}", nameof(value));
-		return new PlcWriteVariableOperation<T>(Address, typedValue);
+		return new PlcWriteDynamicOperation(Address, value);
 	}
 }

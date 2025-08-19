@@ -8,6 +8,13 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="ProjectServices\**" />
+    <Content Remove="ProjectServices\**" />
+    <EmbeddedResource Remove="ProjectServices\**" />
+    <None Remove="ProjectServices\**" />
+  </ItemGroup>
+
+  <ItemGroup>
     <Compile Remove="TwincatServices\PlcDataCacheService\CacheEntry.cs" />
     <Compile Remove="TwincatServices\PlcDataCacheService\IMonitoredVariable.cs" />
     <Compile Remove="TwincatServices\PlcDataCacheService\MachineStatusComponent.cs" />
@@ -37,10 +44,5 @@
 	  <PrivateAssets>all</PrivateAssets>
 	</PackageReference>
 	<PackageReference Include="MudBlazor" Version="8.*" />
-  </ItemGroup>
-
-
-  <ItemGroup>
-    <Folder Include="ProjectServices\" />
   </ItemGroup>
 </Project>

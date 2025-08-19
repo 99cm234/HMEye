@@ -2,6 +2,11 @@
 
 public static class PlcDataCacheConfigProvider
 {
+/// <summary>
+/// Adds items to Cache without use of the PLC attributes used for PlcDataCacheConfigLoader.
+/// Custom structs can be added to cache via this method so they can be cached without use of dynamic types.
+/// </summary>
+/// <returns></returns>
 	public static IEnumerable<CacheItemConfig> GetCacheItemConfigs()
 	{
 		return new[]

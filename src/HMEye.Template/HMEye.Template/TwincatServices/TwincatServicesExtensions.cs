@@ -22,12 +22,31 @@
 			services.AddSingleton<IPlcEventCacheService, PlcEventCacheService>();
 			services.AddHostedService<IPlcEventCacheService>(sp => sp.GetRequiredService<IPlcEventCacheService>());
 
+			services.AddTransient<PlcDataCacheConfigLoader>();
+
 			services.AddSingleton<IPlcDataCache>(sp =>
 			{
 				var plcService = sp.GetRequiredService<IPlcService>();
 				var logger = sp.GetRequiredService<ILogger<PlcDataCache>>();
-				var configs = PlcDataCacheConfigProvider.GetCacheItemConfigs();
-				return new PlcDataCache(plcService, logger, configs);
+
+				var configLoader = sp.GetRequiredService<PlcDataCacheConfigLoader>();
+				try
+				{
+					var configs = configLoader.CreateCacheItemConfigs().GetAwaiter().GetResult();
+					//var configs = PlcDataCacheConfigProvider.GetCacheItemConfigs();
+					//var configs = configs1.Concat(configs2);
+					return new PlcDataCache(plcService, logger, configs);
+				}
+				catch (OperationCanceledException ex)
+				{
+					logger.LogError(ex, "Cache configuration loading was canceled. Using empty configuration.");
+					return new PlcDataCache(plcService, logger, Array.Empty<CacheItemConfig>());
+				}
+				catch (Exception ex)
+				{
+					logger.LogError(ex, "Failed to load cache configuration.");
+					throw;
+				}
 			});
 			services.AddHostedService<IPlcDataCache>(sp => sp.GetRequiredService<IPlcDataCache>());
 
