@@ -1,0 +1,12 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1">
+  <DUT Name="ST_LrealDataPoint" Id="{a6326554-b881-4532-9341-0b67289f57e2}">
+    <Declaration><![CDATA[TYPE ST_LrealDataPoint :
+STRUCT
+	Timestamp	: ULINT;
+	Value		: LREAL;
+END_STRUCT
+END_TYPE
+]]></Declaration>
+  </DUT>
+</TcPlcObject>

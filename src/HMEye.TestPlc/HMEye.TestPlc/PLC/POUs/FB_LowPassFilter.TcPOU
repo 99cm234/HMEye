@@ -1,0 +1,38 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1">
+  <POU Name="FB_LowPassFilter" Id="{d88a0203-b00e-4fd3-abdb-08eb7fc63751}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_LowPassFilter
+VAR_INPUT
+	Enable			: BOOL;
+    Raw				: LREAL; // Raw input signal
+    TimeConstant	: LREAL; // Smoothing time constant (seconds)
+    CycleTime		: LREAL; // PLC cycle time (seconds)
+END_VAR
+VAR_OUTPUT
+    Filtered		: LREAL; // Current filtered value
+END_VAR
+VAR
+    _lastFiltered	: LREAL; // Previous filtered value
+    _alpha			: LREAL; // Smoothing factor
+    _initialized	: BOOL;
+END_VAR]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[IF Enable THEN
+	IF NOT _initialized THEN
+		_lastFiltered := Raw; // Initialize to raw value
+		Filtered := Raw;
+		_initialized := TRUE;
+	END_IF;
+	
+	IF TimeConstant <= 0.0 OR CycleTime <= 0.0 THEN
+		Filtered := _lastFiltered; // No update if invalid inputs
+	ELSE
+		_alpha := CycleTime / TimeConstant;
+		Filtered := _lastFiltered + _alpha * (Raw - _lastFiltered);
+		_lastFiltered := Filtered; // Update for next cycle
+	END_IF;
+END_IF
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>
