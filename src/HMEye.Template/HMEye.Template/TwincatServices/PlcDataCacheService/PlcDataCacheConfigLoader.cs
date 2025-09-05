@@ -145,7 +145,7 @@ public class PlcDataCacheConfigLoader : IDisposable
 
 			string address = child.InstancePath;
 			IDataType? type = ResolveAliasSafe(child.DataType);
-			Type? clrType = MapType(child);
+			Type clrType = MapType(child);
 			int pollingRate = 1000;
 			bool isReadOnly = false;
 			bool isArray = type?.Category == DataTypeCategory.Array;
@@ -216,7 +216,7 @@ public class PlcDataCacheConfigLoader : IDisposable
 					new CacheItemConfig
 					{
 						Address = address,
-						Type = clrType!, // GetClrType method can't return null
+						Type = clrType, 
 						IsArray = isArray,
 						IsDynamic = isDynamic,
 						PollInterval = pollingRate,
@@ -224,6 +224,10 @@ public class PlcDataCacheConfigLoader : IDisposable
 					}
 				);
 			}
+			// Only recurse into subsymbols of symbols without 'HMEye' attribute:
+			// Twincat DynamicTree symbol behavior marks all subsymbols with the attribute of the parent,
+			// so recursion into a symbol marked with 'HMEye' attribute would leave ALL subsymbols cached.
+			// Which would kind of suck.
 			else if (child.SubSymbols.Count > 0)
 			{
 				results.AddRange(ScanSymbolRecursive(child, cancellationToken));
@@ -262,7 +266,7 @@ public class PlcDataCacheConfigLoader : IDisposable
 		return type;
 	}
 
-	public static Type? MapType(ISymbol child)
+	public static Type MapType(ISymbol child)
 	{
 		var type = ResolveAliasSafe(child.DataType);
 		if (type is null)
@@ -270,7 +274,7 @@ public class PlcDataCacheConfigLoader : IDisposable
 
 		// Try resolve by name directly
 		if (TryResolveByName(type.Name, out var resolved))
-			return resolved;
+			return (resolved ?? typeof(object));
 
 		// Handle special categories
 		return type.Category switch

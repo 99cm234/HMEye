@@ -2,47 +2,55 @@
 
 public partial class TwincatTypeMaps
 {
-    public static readonly IReadOnlyDictionary<string, Type> Map = new Dictionary<string, Type>
-    {
-        { "BOOL", typeof(bool) },
-        { "BYTE", typeof(byte) },
-        { "SINT", typeof(sbyte) },
-        { "USINT", typeof(byte) },
-        { "WORD", typeof(ushort) },
-        { "INT", typeof(short) },
-        { "UINT", typeof(ushort) },
-        { "DWORD", typeof(uint) },
-        { "DINT", typeof(int) },
-        { "UDINT", typeof(uint) },
-        { "LWORD", typeof(ulong) },
-        { "LINT", typeof(long) },
-        { "ULINT", typeof(ulong) },
-        { "REAL", typeof(float) },
-        { "LREAL", typeof(double) },
-        { "STRING", typeof(string) },
-        { "WSTRING", typeof(string) },
-        { "BIT", typeof(bool) },
+	public static readonly IReadOnlyDictionary<string, Type> Map = new Dictionary<string, Type>(StringComparer.OrdinalIgnoreCase)
+{
+    // Bool / bits
+    { "BOOL", typeof(bool) },
+	{ "BIT", typeof(bool) },
 
-        // Time / duration
-        { "TIME", typeof(TimeSpan) },
-        { "T", typeof(TimeSpan) },
-        { "LTIME", typeof(TimeSpan) },
+    // Integer types
+    { "SINT", typeof(sbyte) },
+	{ "USINT", typeof(byte) },
+	{ "BYTE", typeof(byte) },
+	{ "INT", typeof(short) },
+	{ "UINT", typeof(ushort) },
+	{ "WORD", typeof(ushort) },
+	{ "DINT", typeof(int) },
+	{ "UDINT", typeof(uint) },
+	{ "DWORD", typeof(uint) },
+	{ "LINT", typeof(long) },
+	{ "ULINT", typeof(ulong) },
+	{ "LWORD", typeof(ulong) },
 
-        // Time of day
-        { "TIME_OF_DAY", typeof(TimeOnly) },
-        { "TOD", typeof(TimeOnly) },
-        { "LTIME_OF_DAY", typeof(TimeOnly) },
-        { "LTOD", typeof(TimeOnly) },
+    // Floating point
+    { "REAL", typeof(float) },
+	{ "LREAL", typeof(double) },
 
-        // Date only
-        { "DATE", typeof(DateOnly) },
-        { "D", typeof(DateOnly) },
-        { "LDATE", typeof(DateOnly) },
+    // Strings
+    { "STRING", typeof(string) },
+	{ "WSTRING", typeof(string) },
 
-        // Date + time
-        { "DATE_AND_TIME", typeof(DateTime) },
-        { "DT", typeof(DateTime) },
-        { "LDATE_AND_TIME", typeof(DateTime) },
-        { "LDT", typeof(DateTime) },
-	};
+    // Time spans / durations
+    { "TIME", typeof(TimeSpan) },
+	{ "T", typeof(TimeSpan) },
+	{ "LTIME", typeof(TimeSpan) },
+
+    // Time of day
+    { "TIME_OF_DAY", typeof(TimeOnly) },
+	{ "TOD", typeof(TimeOnly) },
+	{ "LTIME_OF_DAY", typeof(TimeOnly) },
+	{ "LTOD", typeof(TimeOnly) },
+
+    // Dates
+    { "DATE", typeof(DateOnly) },
+	{ "D", typeof(DateOnly) },
+	{ "LDATE", typeof(DateOnly) },
+
+    // Date+time
+    { "DATE_AND_TIME", typeof(DateTime) },
+	{ "DT", typeof(DateTime) },
+	{ "LDATE_AND_TIME", typeof(DateTime) },
+	{ "LDT", typeof(DateTime) },
+};
+
 }
