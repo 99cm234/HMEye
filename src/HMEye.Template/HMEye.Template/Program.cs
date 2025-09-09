@@ -4,7 +4,7 @@ using HMEye.Components;
 using HMEye.DumbAuth;
 using HMEye.DumbTs;
 using HMEye.ScreenWakeLock;
-using HMEye.TwincatServices;
+using HMEye.Twincat;
 using MudBlazor.Services;
 
 Env.Load();

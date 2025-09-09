@@ -1,8 +1,10 @@
 ﻿@page "/"
 @attribute [Authorize]
-@using HMEye.TwincatServices;
 @using System.Runtime.InteropServices
-@inject IPlcDataCache DataCache;
+@using HMEye.Twincat.Cache.PlcCache
+@using HMEye.Twincat.Plc.PlcService
+@using HMEye.Twincat.Contracts.Models
+@inject IPlcCache DataCache;
 @inject ISnackbar Snackbar;
 @inject IPlcService PlcService;
 

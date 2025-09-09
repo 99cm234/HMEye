@@ -14,17 +14,6 @@
     <None Remove="ProjectServices\**" />
   </ItemGroup>
 
-  <ItemGroup>
-    <Compile Remove="TwincatServices\PlcDataCacheService\CacheEntry.cs" />
-    <Compile Remove="TwincatServices\PlcDataCacheService\IMonitoredVariable.cs" />
-    <Compile Remove="TwincatServices\PlcDataCacheService\MachineStatusComponent.cs" />
-    <Compile Remove="TwincatServices\PlcDataCacheService\MonitoredVariable.cs" />
-    <Compile Remove="TwincatServices\PlcDataCacheService\MonitoredVariableConfig.cs" />
-    <Compile Remove="TwincatServices\PlcDataCacheService\MonitoredVariableFactory.cs" />
-    <Compile Remove="TwincatServices\PlcDataCacheService\PlcDataClient.cs" />
-    <Compile Remove="TwincatServices\PlcDataCacheService\Results.cs" />
-  </ItemGroup>
-
 
   <ItemGroup>
 	<PackageReference Include="Beckhoff.TwinCAT.Ads" Version="6.2.467" />
