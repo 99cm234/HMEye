@@ -9,11 +9,11 @@ public static class PlcDataEndpoints
 {
 	public static void MapPlcDataEndpoints(this IEndpointRouteBuilder app)
 	{
-		var group = app.MapGroup("/api/plc-data").AddEndpointFilter<ApiKeyEndpointFilter>();
+		var group = app.MapGroup("/api/plc-data").RequireAuthorization("ApiKeyOrAuthenticated");
 
 		group.MapGet(
 			"/{type}/{address}",
-			(string type, string address, IPlcCache dataCache) =>
+			(string type, string address, [FromServices] IPlcCache dataCache) =>
 			{
 				var result = ResolveRead(dataCache, type, address);
 				if (result.Error != null)
@@ -26,7 +26,7 @@ public static class PlcDataEndpoints
 
 		group.MapPost(
 			"/bulk-read",
-			(BulkRequest request, IPlcCache dataCache) =>
+			(BulkRequest request, [FromServices] IPlcCache dataCache) =>
 			{
 				var results = new Dictionary<string, object>();
 				foreach (var item in request.Items)
@@ -41,7 +41,7 @@ public static class PlcDataEndpoints
 
 		group.MapPost(
 			"/{type}/{address}",
-			(string type, string address, [FromBody] JsonElement body, IPlcCache dataCache) =>
+			(string type, string address, [FromBody] JsonElement body, [FromServices] IPlcCache dataCache) =>
 			{
 				var result = ResolveWrite(dataCache, type, address, body);
 				if (!result.Success)
@@ -54,7 +54,7 @@ public static class PlcDataEndpoints
 
 		group.MapPost(
 			"/bulk-write",
-			(BulkRequest request, IPlcCache dataCache) =>
+			(BulkRequest request, [FromServices] IPlcCache dataCache) =>
 			{
 				var results = new Dictionary<string, object>();
 				foreach (var item in request.Items)

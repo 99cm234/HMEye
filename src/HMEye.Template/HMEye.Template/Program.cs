@@ -2,22 +2,23 @@ using Blazored.LocalStorage;
 using DotNetEnv;
 using HMEye.Components;
 using HMEye.DumbAuth;
-using HMEye.DumbTs;
+using HMEye.Extensions;
 using HMEye.ScreenWakeLock;
 using HMEye.Twincat;
-using HMEye.Twincat.Endpoints;
 using MudBlazor.Services;
 
 Env.Load();
 
 var builder = WebApplication.CreateBuilder(args);
 
+builder.Services.AddHMEyeOpenApi();
+
 // Add feature specific configuration files
-builder.Configuration
-		.AddJsonFile("appsettings.dumbauth.json", optional: true, reloadOnChange: true)
-		.AddJsonFile("appsettings.modbus.json", optional: true, reloadOnChange: true)
-		.AddJsonFile("appsettings.twincat.json", optional: true, reloadOnChange: true)
-		.AddJsonFile("appsettings.yarp.json", optional: true, reloadOnChange: true);
+builder
+	.Configuration.AddJsonFile("appsettings.dumbauth.json", optional: true, reloadOnChange: true)
+	.AddJsonFile("appsettings.modbus.json", optional: true, reloadOnChange: true)
+	.AddJsonFile("appsettings.twincat.json", optional: true, reloadOnChange: true)
+	.AddJsonFile("appsettings.yarp.json", optional: true, reloadOnChange: true);
 
 // Add MudBlazor services
 builder.Services.AddMudServices();
@@ -30,40 +31,14 @@ string appDataDir = Path.Combine(appDataPath, "HMEye");
 Directory.CreateDirectory(appDataDir);
 
 builder.Services.AddDumbAuth(builder.Configuration, appDataDir);
-builder.Services.AddDumbTsLogging(TimeSpan.FromSeconds(2), appDataDir);
+
+//builder.Services.AddDumbTsLogging(TimeSpan.FromSeconds(2), appDataDir);
 builder.Services.AddScoped<ScreenWakeLockService>();
 builder.Services.AddBlazoredLocalStorage();
 
 builder.Services.AddTwincatServices(builder.Configuration);
 
-builder.Services.AddAuthorizationBuilder()
-	.AddPolicy("RequireAdmin", policy => policy.RequireRole("Admin"))
-	.AddPolicy("RequireViewer", policy => policy.RequireRole("User", "Admin"))
-	.AddPolicy("AllowAnonymous", policy => policy.RequireAssertion(_ => true))
-	.AddPolicy("GrafanaPolicy", policy =>
-		{
-			policy.RequireAssertion(context =>
-			{
-				var httpContext = context.Resource as HttpContext;
-				// Check for admin role from any source (Cookie or API Key)
-				if (context.User.IsInRole("Admin")) return true;
-
-				if (httpContext != null)
-				{
-					if (
-						httpContext.Request.Path.StartsWithSegments("/grafana/public-dashboards")
-						|| httpContext.Request.Path.StartsWithSegments("/grafana/public")
-						|| httpContext.Request.Path.StartsWithSegments("/grafana/api/public")
-					)
-					{
-						return true;
-					}
-					return context.User.IsInRole("Admin");
-				}
-				return false;
-			});
-		}
-);
+builder.Services.AddAuthorizationBuilder().AddHMEyePolicies(builder.Configuration);
 
 builder.Services.AddReverseProxy().LoadFromConfig(builder.Configuration.GetSection("ReverseProxy"));
 
@@ -77,6 +52,8 @@ if (!app.Environment.IsDevelopment())
 	app.UseHsts();
 }
 
+app.MapHMEyeScalar(builder.Configuration);
+
 app.UseHttpsRedirection();
 app.UseRateLimiter();
 
@@ -84,10 +61,9 @@ app.UseAuthentication();
 app.UseAuthorization();
 app.UseAntiforgery();
 app.MapStaticAssets();
-app.MapRazorComponents<App>()
-	.AddInteractiveServerRenderMode();
+app.MapRazorComponents<App>().AddInteractiveServerRenderMode();
 app.MapAuthEndpoints();
-app.MapPlcDataEndpoints();
+app.MapTwincatEndpoints();
 
 app.MapReverseProxy();
 

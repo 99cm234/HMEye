@@ -1,6 +1,7 @@
 ﻿using HMEye.Twincat.Cache.EventLogCache;
 using HMEye.Twincat.Cache.PlcCache;
 using HMEye.Twincat.Contracts.Models;
+using HMEye.Twincat.Endpoints;
 using HMEye.Twincat.Plc.EventLogService;
 using HMEye.Twincat.Plc.PlcService;
 using HMEye.Twincat.Plc.SystemService;
@@ -58,6 +59,12 @@ namespace HMEye.Twincat
 			services.AddHostedService(sp => sp.GetRequiredService<IPlcCache>());
 
 			return services;
+		}
+		public static IEndpointRouteBuilder MapTwincatEndpoints(this IEndpointRouteBuilder app)
+		{
+			app.MapPlcDataEndpoints();
+
+			return app;
 		}
 	}
 }

@@ -22,6 +22,7 @@
 	<PackageReference Include="DotNetEnv" Version="3.1.1" />
 	<PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="9.0.7" />
 	<PackageReference Include="Microsoft.AspNetCore.Identity.UI" Version="9.0.7" />
+	<PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="9.0.0" />
 	<PackageReference Include="Microsoft.EntityFrameworkCore" Version="9.0.7" />
 	<PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="9.0.7">
 	  <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
@@ -33,6 +34,7 @@
 	  <PrivateAssets>all</PrivateAssets>
 	</PackageReference>
 	<PackageReference Include="MudBlazor" Version="8.*" />
+	<PackageReference Include="Scalar.AspNetCore" Version="2.11.10" />
 	<PackageReference Include="Yarp.ReverseProxy" Version="2.3.0" />
   </ItemGroup>
 	
