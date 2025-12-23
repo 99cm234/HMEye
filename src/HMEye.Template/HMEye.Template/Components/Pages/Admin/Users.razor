@@ -1,0 +1,19 @@
+﻿@page "/admin/users"
+@using Microsoft.AspNetCore.Authorization
+@attribute [Authorize(Roles = "Admin")]
+
+<PageTitle>Users</PageTitle>
+
+<MudTabs ApplyEffectsToContainer="true" Elevation="2" Class="mt-4">
+	<MudTabPanel Text="User Management">
+		<UserManagement />
+	</MudTabPanel>
+	<MudTabPanel Text="User Sessions">
+		<UserSessions />
+	</MudTabPanel>
+
+</MudTabs>
+
+@code {
+
+}

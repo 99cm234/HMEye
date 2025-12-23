@@ -1,0 +1,119 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1">
+  <POU Name="FB_Scheduler" Id="{6116fbb0-73da-426c-aafc-0c715839a7b9}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_Scheduler
+VAR_INPUT
+END_VAR
+VAR_OUTPUT
+	Every1Second	: BOOL; // TRUE for one cycle every 1 seconds
+    Every5Seconds	: BOOL; // TRUE for one cycle every 5 seconds
+    Every10Seconds	: BOOL; // TRUE for one cycle every 10 seconds
+    Every20Seconds	: BOOL; // TRUE for one cycle every 30 seconds
+    Every30Seconds	: BOOL; // TRUE for one cycle every 30 seconds
+    Every1Minutes	: BOOL; // TRUE for one cycle every 1 minutes
+    Every2Minutes	: BOOL; // TRUE for one cycle every 2 minutes
+    Every5Minutes	: BOOL; // TRUE for one cycle every 5 minutes
+	CurrentDT		: DT;
+	CurrentUTC		: DT;
+END_VAR
+VAR
+    _lastTrigger1	: DT;
+    _lastTrigger5	: DT;
+    _lastTrigger10	: DT;
+	_lastTrigger20	: DT;
+	_lastTrigger30	: DT;
+	_lastTrigger60	: DT;
+	_lastTrigger120	: DT;
+	_lastTrigger300	: DT;
+    _elapsed		: LREAL; // Elapsed time since last trigger (seconds)
+    _initialized	: BOOL;
+	fbSysTime		: FB_LocalSystemTime := (bEnable := TRUE, dwCycle := 1);
+    fbTzInfo        : FB_GetTimeZoneInformation := (bExecute := TRUE);
+    fbTzToUtc       : FB_TzSpecificLocalTimeToSystemTime;
+END_VAR]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[fbSysTime();
+fbTzInfo();
+fbTzToUtc(in := fbSysTime.systemTime, tzInfo := fbTzInfo.tzInfo);
+CurrentDT := SYSTEMTIME_TO_DT(fbSysTime.systemTime);
+CurrentUTC := SYSTEMTIME_TO_DT(fbTzToUtc.out);
+
+IF NOT _initialized THEN
+    _lastTrigger1	:= CurrentDT;
+    _lastTrigger5	:= CurrentDT;
+    _lastTrigger10	:= CurrentDT;
+    _lastTrigger20	:= CurrentDT;
+    _lastTrigger30	:= CurrentDT;
+    _lastTrigger60	:= CurrentDT;
+    _lastTrigger120	:= CurrentDT;
+    _lastTrigger300	:= CurrentDT;
+    _initialized := TRUE;
+END_IF;
+
+_elapsed := TO_LREAL(CurrentDT - _lastTrigger1) / 1000.0;
+IF _elapsed >= 1.0 THEN
+	Every1Second := TRUE;
+	_lastTrigger1 := CurrentDT;
+ELSE
+	Every1Second := FALSE;
+END_IF;
+
+_elapsed := TO_LREAL(CurrentDT - _lastTrigger5) / 1000.0;
+IF _elapsed >= 5.0 THEN
+	Every5Seconds := TRUE;
+	_lastTrigger5 := CurrentDT;
+ELSE
+    Every5Seconds := FALSE;
+END_IF;
+
+_elapsed := TO_LREAL(CurrentDT - _lastTrigger10) / 1000.0;
+IF _elapsed >= 10.0 THEN
+    Every10Seconds := TRUE;
+    _lastTrigger10 := CurrentDT;
+ELSE
+    Every10Seconds := FALSE;
+END_IF;
+
+_elapsed := TO_LREAL(CurrentDT - _lastTrigger20) / 1000.0;
+IF _elapsed >= 20.0 THEN
+    Every20Seconds := TRUE;
+    _lastTrigger20 := CurrentDT;
+ELSE
+    Every20Seconds := FALSE;
+END_IF;
+
+_elapsed := TO_LREAL(CurrentDT - _lastTrigger30) / 1000.0;
+IF _elapsed >= 30.0 THEN
+    Every30Seconds := TRUE;
+    _lastTrigger30 := CurrentDT;
+ELSE
+    Every30Seconds := FALSE;
+END_IF;
+
+_elapsed := TO_LREAL(CurrentDT - _lastTrigger60) / 1000.0;
+IF _elapsed >= 60.0 THEN
+    Every1Minutes := TRUE;
+    _lastTrigger60 := CurrentDT;
+ELSE
+    Every1Minutes := FALSE;
+END_IF;
+
+_elapsed := TO_LREAL(CurrentDT - _lastTrigger120) / 1000.0;
+IF _elapsed >= 120.0 THEN
+    Every2Minutes := TRUE;
+    _lastTrigger120 := CurrentDT;
+ELSE
+    Every2Minutes := FALSE;
+END_IF;
+
+_elapsed := TO_LREAL(CurrentDT - _lastTrigger300) / 1000.0;
+IF _elapsed >= 300.0 THEN
+    Every5Minutes := TRUE;
+    _lastTrigger300 := CurrentDT;
+ELSE
+    Every5Minutes := FALSE;
+END_IF;
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

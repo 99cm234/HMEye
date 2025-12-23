@@ -1,0 +1,33 @@
+# 1. Single Read (GET)
+curl -k -X GET "https://localhost/api/plc-data/bool/GVL.bTestBool" \
+     -H "X-Api-Key: test-api-key"
+
+# 2. Single Write (POST)
+curl -k -X POST "https://localhost/api/plc-data/bool/GVL.bTestBool" \
+     -H "X-Api-Key: test-api-key" \
+     -H "Content-Type: application/json" \
+     -d "true"
+
+# 3. Bulk Write (POST)
+curl -k -X POST "https://localhost/api/plc-data/bulk-write" \
+     -H "X-Api-Key: test-api-key" \
+     -H "Content-Type: application/json" \
+     -d '{
+           "items": [
+             { "address": "GVL.bTestBool", "type": "bool", "value": true },
+             { "address": "GVL.nTestInt", "type": "int", "value": 123 },
+             { "address": "GVL.sTestString", "type": "string", "value": "Bulk Write Test" }
+           ]
+         }'
+
+# 4. Bulk Read (POST)
+curl -k -X POST "https://localhost/api/plc-data/bulk-read" \
+     -H "X-Api-Key: test-api-key" \
+     -H "Content-Type: application/json" \
+     -d '{
+           "items": [
+             { "address": "GVL.bTestBool", "type": "bool" },
+             { "address": "GVL.nTestInt", "type": "int" },
+             { "address": "GVL.sTestString", "type": "string" }
+           ]
+         }'

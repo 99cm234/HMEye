@@ -1,0 +1,117 @@
+﻿@*
+** Example Usage ** 
+
+    @inject IDialogService Dialog
+
+    private double _setpoint;
+
+    private async Task OpenDialogAsync()
+    {
+        var dialogInput = _setpoint;
+        var dialogOptions = new DialogOptions { CloseOnEscapeKey = true, BackdropClick = true, CloseButton = true };
+        var dialogParams = new DialogParameters<NumericDialog<double>>
+        {
+            { x => x.Label, "Fan Setpoint" },
+            { x => x.Value, dialogInput },
+            { x => x.MinValue, 50 },
+            { x => x.MaxValue, 85 },
+            { x => x.Step, 1},
+            { x => x.BigStep, 10},
+            { x => x.Format, "F0" }
+        };
+
+        var dialog = await Dialog.ShowAsync<NumericDialog<double>>("Setpoint", dialogParams, dialogOptions);
+        var result = await dialog.Result;
+        if (result is not null && !result.Canceled && result.Data is double value)
+        {
+            plc.WriteQueue("MAIN._fanSetpoint", value);
+        }
+    }
+*@
+@using System.Numerics
+@typeparam T where T : INumber<T>
+
+<MudDialog>
+    <DialogContent>
+        <MudNumericField T="T"
+                         Label="@Label"
+                         @bind-Value="Value"
+                         Variant="Variant.Outlined"
+                         Min="@MinValue"
+                         Max="@MaxValue"
+                         Immediate="true"
+                         Step="@Step"
+                         Format="@Format"
+                         Style="width: 100%;" />
+        <MudStack Row="true" Class="ma-4">
+            <MudButton OnClick="BigIncrement" FullWidth Variant="Variant.Filled" Color="Color.Primary">+@(BigStep)X</MudButton>
+            <MudButton OnClick="Increment" FullWidth Variant="Variant.Filled" Color="Color.Primary">+</MudButton>
+            <MudButton OnClick="Decrement" FullWidth Variant="Variant.Filled" Color="Color.Primary">-</MudButton>
+            <MudButton OnClick="BigDecrement" FullWidth Variant="Variant.Filled" Color="Color.Primary">-@(BigStep)X</MudButton>
+        </MudStack>
+    </DialogContent>
+    <DialogActions>
+        <MudButton Color="Color.Primary" OnClick="Confirm">OK</MudButton>
+        <MudButton OnClick="Cancel">Cancel</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter]
+    private IMudDialogInstance MudDialog { get; set; } = default!;
+
+    [Parameter]
+    public string Label { get; set; } = "Enter Value";
+
+    [Parameter]
+    public T Value { get; set; } = default!;
+
+    [Parameter]
+    public T MinValue { get; set; } = default!;
+
+    [Parameter]
+    public T MaxValue { get; set; } = default!;
+
+    [Parameter]
+    public T Step { get; set; } = default!;
+
+    [Parameter]
+    public T BigStep { get; set; } = default!;
+
+    [Parameter]
+    public string Format { get; set; } = "F2";
+
+    private void Increment()
+    {
+        if (Value + Step <= MaxValue)
+            Value += Step;
+    }
+
+    private void Decrement()
+    {
+        if (Value - Step >= MinValue)
+            Value -= Step;
+    }
+
+    private void BigIncrement()
+    {
+        if (Value + BigStep <= MaxValue)
+            Value += BigStep;
+    }
+
+    private void BigDecrement()
+    {
+        if (Value - BigStep >= MinValue)
+            Value -= BigStep;
+    }
+
+    private void Confirm()
+    {
+        MudDialog.Close(DialogResult.Ok(Value));
+    }
+
+    private void Cancel()
+    {
+        MudDialog.Cancel();
+    }
+}

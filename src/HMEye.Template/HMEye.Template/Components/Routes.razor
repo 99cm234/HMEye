@@ -1,0 +1,24 @@
+﻿@using HMEye.Components.Pages.Account
+@attribute [Authorize]
+<Router AppAssembly="@typeof(Program).Assembly">
+    <Found Context="routeData">
+        <AuthorizeRouteView RouteData="routeData" DefaultLayout="typeof(Layout.MainLayout)" Context="arvContext">
+            <NotAuthorized>
+                <AuthorizeView Context="authViewContext">
+                    <Authorized>
+                        <RedirectToAccessDenied />
+                    </Authorized>
+                    <NotAuthorized>
+                        <RedirectToLogin />
+                    </NotAuthorized>
+                </AuthorizeView>
+            </NotAuthorized>
+        </AuthorizeRouteView>
+        <FocusOnNavigate RouteData="routeData" Selector="h1" />
+    </Found>
+    <NotFound>
+        <LayoutView Layout="typeof(Layout.SimpleLayout)">
+            <p>Sorry, there's nothing at this address.</p>
+        </LayoutView>
+    </NotFound>
+</Router>

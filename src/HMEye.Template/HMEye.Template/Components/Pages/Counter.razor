@@ -1,0 +1,143 @@
+﻿@page "/counter"
+@using Microsoft.AspNetCore.Authorization
+@using System.ComponentModel.DataAnnotations
+@using HMEye.DumbTs
+@using HMEye.DumbAuth
+@rendermode InteractiveServer
+@attribute [Authorize]
+@inject UserService UserService
+@inject NavigationManager Navigation
+@layout Components.Layout.MainLayout
+@inject DumbTsLogger DumbTsLogger
+@implements IDisposable
+
+<PageTitle>Counter</PageTitle>
+
+<MudText Typo="Typo.h3" GutterBottom="true">Counter</MudText>
+<MudText Typo="Typo.body1">
+    The page demonstrates use of DumbTs time series logging service. <br /><br />
+    Writing and reading data directly from client page is atypical, but provides a contained example of how to use the service.<br />
+    Real-world usage would log data via server-side service and just read the db from client pages.<br /><br />
+</MudText>
+<MudGrid>
+    <MudItem xs="12" sm="12" md="6" lg="4">
+        <MudPaper Class="pa-4">
+            <MudStack Row Class="d-flex justify-center align-center" Style="height: 70px;">
+                <MudText Typo="Typo.h5" Style="flex: 1;" Align="Align.Center">Count: @currentCount</MudText>
+                <MudButton Color="Color.Primary" Style="flex: 1;" Size="Size.Large" Variant="Variant.Filled" @onclick="IncrementCount">Count++</MudButton>
+            </MudStack>
+            <MudTable Items="@data" Dense="true">
+                <HeaderContent>
+                    <MudTh>Counter Value</MudTh>
+                </HeaderContent>
+                <RowTemplate>
+                    <MudTd>@context</MudTd>
+                </RowTemplate>
+            </MudTable>
+        </MudPaper>
+    </MudItem>
+    <MudItem xs="12" sm="12" md="6" lg="4">
+        <MudPaper Class="pa-4">
+            <form @onsubmit="@SubmitText">
+                <MudStack Row Class="d-flex justify-center align-center" Style="height: 70px;">
+                    <div style="flex: 1;">
+                        <MudTextField @ref="textField" T="string" Label="Text" Variant="Variant.Outlined" @bind-Value="text" />
+                    </div>
+                    <MudButton Color="Color.Secondary" Style="flex: 1;" Size="Size.Large" Variant="Variant.Filled" ButtonType="ButtonType.Submit">Add Text</MudButton>
+                </MudStack>
+                <MudTable Items="@textList" Dense="true">
+                    <HeaderContent>
+                        <MudTh>Text Value</MudTh>
+                    </HeaderContent>
+                    <RowTemplate>
+                        <MudTd>@context</MudTd>
+                    </RowTemplate>
+                </MudTable>
+            </form>
+        </MudPaper>
+    </MudItem>
+    <MudItem xs="12" sm="12" md="6" lg="4">
+        <MudPaper Class="pa-4">
+            <MudStack Row Class="d-flex justify-center align-center" Style="height: 70px;">
+                <MudText Typo="Typo.h5" Style="flex: 1;" Align="Align.Center">Flag: @flag</MudText>
+                <MudButton Color="Color.Tertiary" Style="flex: 1;" Size="Size.Large" Variant="Variant.Filled" @onclick="ToggleBool">Toggle Flag</MudButton>
+            </MudStack>
+            <MudTable Items="@flags" Dense="true">
+                <HeaderContent>
+                    <MudTh>Flag Value</MudTh>
+                </HeaderContent>
+                <RowTemplate>
+                    <MudTd>@context</MudTd>
+                </RowTemplate>
+            </MudTable>
+        </MudPaper>
+    </MudItem>
+</MudGrid>
+
+@code {
+    private int currentCount = 0;
+    private bool flag = false;
+    private string? text;
+
+    List<double> data = new();
+    List<bool> flags = new();
+    List<string> textList = new();
+
+    private MudTextField<string> textField = new();
+
+    protected override void OnInitialized()
+    {
+        NewData();
+        DumbTsLogger.OnNewData += NewData;
+    }
+
+    private async void NewData()
+    {
+        data = await GetCountAsync();
+        flags = await GetFlagsAsync();
+        textList = await GetTextAsync();
+        await InvokeAsync(StateHasChanged);
+    }
+
+    private void IncrementCount()
+    {
+        currentCount++;
+        DumbTsLogger.AddNumericDataPoint("Counter", currentCount);
+    }
+
+    private void ToggleBool()
+    {
+        flag = !flag;
+        DumbTsLogger.AddBooleanDataPoint("Flag", flag);
+    }
+
+    private async Task SubmitText()
+    {
+        DumbTsLogger.AddTextDataPoint("Text", text ?? DateTime.Now.ToString("HH:mm:ss.fff"));
+        await textField.BlurAsync();
+        await textField.Clear();
+    }
+
+    private async Task<List<double>> GetCountAsync()
+    {
+        var newData = await DumbTsLogger.GetDataAsync<NumericDataPoint>(seriesName: "Counter", limit: 10);
+        return newData.Select(x => x.Value).ToList();
+    }
+
+    private async Task<List<bool>> GetFlagsAsync()
+    {
+        var newFlags = await DumbTsLogger.GetDataAsync<BooleanDataPoint>(seriesName: "Flag", limit: 10);
+        return newFlags.Select(x => x.Value).ToList();
+    }
+
+    public void Dispose()
+    {
+        DumbTsLogger.OnNewData -= NewData;
+    }
+
+    private async Task<List<string>> GetTextAsync()
+    {
+        var newText = await DumbTsLogger.GetDataAsync<TextDataPoint>(seriesName: "Text", limit: 10);
+        return newText.Select(x => x.Value).ToList();
+    }
+}
