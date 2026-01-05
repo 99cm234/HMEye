@@ -1,0 +1,96 @@
+﻿@page "/"
+@attribute [Authorize]
+@using System.Runtime.InteropServices
+@using HMEye.Twincat.Cache.PlcCache
+@using HMEye.Twincat.Plc.PlcService
+@using HMEye.Twincat.Contracts.Models
+@inject IPlcCache DataCache;
+@inject ISnackbar Snackbar;
+@inject IPlcService PlcService;
+
+<PageTitle>Home</PageTitle>
+
+<MudGrid>
+    <MudItem xs="12" sm="4">
+        <MudPaper Class="pa-4">
+            <MudStack Row="false">
+				<MudText Typo="Typo.body1">@_currentDT</MudText>
+				<MudButton class="mb-8" OnClick="ReadDT" Variant=Variant.Filled Color="Color.Primary">Read DateTime</MudButton>
+				<MudButton OnClick="Start" Variant="Variant.Filled" Color="Color.Tertiary">Start</MudButton>
+				<MudButton OnClick="Stop" Variant="Variant.Filled" Color="Color.Secondary">Stop</MudButton>
+            </MudStack>
+        </MudPaper>
+    </MudItem>
+    <MudItem xs="12" sm="8">
+        <MudPaper Class="pa-4">
+            <MudButton Class="mb-4" OnClick="ReadStruct" Variant="Variant.Filled" Color="Color.Primary">Read Struct</MudButton>
+            @if (_dataPoints != null && _dataPoints.Any())
+            {
+                <MudTable Items="_dataPoints" Elevation="1" Hover="true">
+                    <HeaderContent>
+                        <MudTh>TimeStamp</MudTh>
+                        <MudTh>Value</MudTh>
+                    </HeaderContent>
+                    <RowTemplate>
+                        <MudTd>@context.DateTime</MudTd>
+                        <MudTd>@context.Value</MudTd>
+                    </RowTemplate>
+                </MudTable>
+            }
+        </MudPaper>
+    </MudItem>
+</MudGrid>
+
+@code {
+    private DoubleDataPoint[]? _dataPoints = new DoubleDataPoint[10];
+    private IEnumerable<short>? _intArray = [];
+    private DateTime _currentDT;
+    private bool _activity;
+
+    private void ReadDT()
+    {
+        var dtResult = DataCache.TryReadCached<DateTime>("MAIN.CurrentDT");
+        if (!dtResult.Error)
+        {
+            _currentDT = dtResult.Value;
+        }
+        else
+        {
+            Snackbar.Add(dtResult.ErrorMessage, Severity.Error);
+        }
+    }
+
+    private void ReadStruct()
+    {
+        var activityResult = DataCache.TryReadCached<bool>("MAIN.Activity");
+        if (!activityResult.Error)
+        {
+			_activity = activityResult.Value;
+        }
+        else
+        {
+            Snackbar.Add(activityResult.ErrorMessage, Severity.Error);
+        }
+
+        var bufferResult = DataCache.TryReadCached<DoubleDataPoint[]>("MAIN.PercentHistory");
+        if (!bufferResult.Error)
+        {
+            _dataPoints = bufferResult.Value;
+
+        }
+        else
+        {
+            Snackbar.Add(bufferResult.ErrorMessage, Severity.Error);
+        }
+    }
+
+    private void Start()
+    {
+        DataCache.WriteQueue("MAIN.StartCommand", true);
+    }
+    private void Stop()
+    {
+        DataCache.WriteQueue("MAIN.StopCommand", true);
+    }
+
+}

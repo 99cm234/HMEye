@@ -1,0 +1,79 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1">
+  <POU Name="MAIN" Id="{af68fb2d-2e1a-42f2-af0c-75a2afce814d}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM MAIN
+VAR_INPUT
+{attribute 'HMEye':='200'}
+	StartCommand	: BOOL;
+	
+{attribute 'HMEye':='200'}
+	StopCommand		: BOOL;
+END_VAR
+
+VAR_OUTPUT
+{attribute 'HMEye':='1000'}
+{attribute 'IsReadOnly':='true'}
+	CurrentDT		: DT;
+	
+{attribute 'HMEye':='1000'}
+	Activity		: BOOL;
+	
+{attribute 'HMEye':='200'}
+	Percent			: LREAL;
+	
+{attribute 'HMEye':='5000'} 
+	PercentHistory	: ARRAY[0..9] OF ST_LrealDataPoint;
+END_VAR
+VAR
+	_raw		: LREAL;
+	_scaled		: LREAL;
+	_enable		: BOOL;
+	_dequeue	: BOOL;
+	_reset		: BOOL;
+	
+	fbLowPass	: FB_LowPassFilter;
+	fbScheduler	: FB_Scheduler;
+	fbRand		: DRAND;
+	fbFifo		: FB_FifoIndexer := (MaxSize := 10, EnableWrapAround := TRUE);
+	
+END_VAR
+VAR CONSTANT
+	EPOCH_DT	: DT := DT#1970-01-01-00:00:00;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[fbScheduler();
+fbLowPass(Enable := _enable, Raw := _scaled, TimeConstant := 5, CycleTime := 0.01, Filtered => Percent);
+CurrentDT := fbScheduler.CurrentDT;
+
+_enable S= StartCommand;
+_enable R= StopCommand;
+StartCommand := StopCommand := FALSE;
+
+IF fbScheduler.Every1Second THEN
+	Activity := NOT Activity;
+END_IF
+
+IF fbScheduler.Every5Seconds THEN
+	IF _enable THEN
+		PercentHistory[fbFifo.WriteIndex].Timestamp := DT_TO_FILETIME64(fbScheduler.CurrentDT);
+		PercentHistory[fbFifo.WriteIndex].Value := Percent;
+		fbFifo.Enqueue();
+    END_IF
+END_IF
+
+IF fbScheduler.Every10Seconds THEN
+	fbRand(Seed := 0, Num => _raw);
+	_scaled := _raw * 100;
+END_IF
+
+IF _dequeue AND NOT fbFifo.IsEmpty THEN
+	PercentHistory[fbFifo.ReadIndex].Timestamp := DT_TO_FILETIME64(EPOCH_DT);
+	PercentHistory[fbFifo.ReadIndex].Value := 0;
+	fbFifo.Dequeue();
+	_dequeue := FALSE;
+END_IF
+		]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

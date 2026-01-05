@@ -1,0 +1,41 @@
+﻿@page "/account/logout"
+@layout Components.Layout.SimpleLayout
+@using Microsoft.AspNetCore.Authentication
+@using MudBlazor
+@inject NavigationManager Navigation
+@attribute [AllowAnonymous]
+
+<MudContainer MaxWidth="MaxWidth.Small" Class="d-flex align-center justify-center" Style="min-height: 60vh;">
+    <MudPaper Elevation="3" Class="pa-6 ma-4" Style="width: 400px;">
+        <MudText Typo="Typo.h5" Class="mb-4" Align="Align.Center">Logout</MudText>
+        @if (!string.IsNullOrEmpty(errorMessage))
+        {
+            <MudAlert Severity="Severity.Error" Class="mb-4">
+                @errorMessage
+            </MudAlert>
+        }
+        <MudText Typo="Typo.body1" Class="mb-4" Align="Align.Center">Are you sure you want to log out?</MudText>
+        <form method="post" action="/auth/logout">
+            <AntiforgeryToken />
+            <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary" FullWidth="true" Class="mt-2">Log Out</MudButton>
+        </form>
+        <MudButton Variant="Variant.Text" Color="Color.Secondary" FullWidth="true" Class="mt-2" OnClick="GoToHome">Cancel</MudButton>
+    </MudPaper>
+</MudContainer>
+
+@code {
+    private string? errorMessage;
+
+    protected override void OnInitialized()
+    {
+        if (Navigation.Uri.Contains("error=logout-failed"))
+        {
+            errorMessage = "Logout failed. Please try again.";
+        }
+    }
+
+    private void GoToHome()
+    {
+        Navigation.NavigateTo("/", forceLoad: true);
+    }
+}

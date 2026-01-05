@@ -1,0 +1,33 @@
+{
+  "id": "/",
+  "name": "HMEye Template Project",
+  "short_name": "HMEye",
+  "start_url": "/",
+  "display": "fullscreen",
+  "icons": [
+    {
+      "src": "icons/eyeball-button-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "icons/eyeball-button-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ],
+  "zzscreenshots": [
+    {
+      "src": "screenshots/mobile-narrow.png",
+      "sizes": "360x640",
+      "type": "image/png",
+      "form_factor": "narrow"
+    },
+    {
+      "src": "screenshots/desktop-wide.png",
+      "sizes": "1280x720",
+      "type": "image/png",
+      "form_factor": "wide"
+    }
+  ]
+}

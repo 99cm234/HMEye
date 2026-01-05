@@ -1,0 +1,118 @@
+﻿@page "/account/login"
+@rendermode InteractiveServer
+@layout Components.Layout.SimpleLayout
+@using System.ComponentModel.DataAnnotations
+@using HMEye.DumbAuth.Models
+@using Microsoft.AspNetCore.WebUtilities
+@using MudBlazor
+@inject NavigationManager Navigation
+@attribute [AllowAnonymous]
+
+<MudContainer MaxWidth="MaxWidth.Small" Class="d-flex align-center justify-center" Style="min-height: 60vh;">
+    <MudPaper Elevation="3" Class="pa-6 ma-4" Style="width: 400px;">
+        <MudText Typo="Typo.h5" Class="mb-4" Align="Align.Center">Login</MudText>
+        <EditForm EditContext="@editContext" FormName="login-form" OnValidSubmit="HandleValidSubmit">
+            <DataAnnotationsValidator />
+            @if (editContext.GetValidationMessages().Any())
+            {
+                <MudAlert Severity="Severity.Error" Class="mb-4">
+                    <ValidationSummary />
+                </MudAlert>
+            }
+            @if (!string.IsNullOrEmpty(errorMessage))
+            {
+                <MudAlert Severity="Severity.Error" Class="mb-4">
+                    @errorMessage
+                </MudAlert>
+            }
+            <form method="post" action="/auth/login">
+                <AntiforgeryToken />
+                <MudTextField T="string"
+					@bind-Value="loginModel.Username"
+					Label="Username" 
+                    name="Username"
+                    autocomplete="username"
+                    Variant="Variant.Outlined" 
+                    Class="mb-4" 
+                    For="@(() => loginModel.Username)"
+                    InputMode="InputMode.text" 
+                    Adornment="Adornment.Start" 
+                    AdornmentIcon="@Icons.Material.Filled.Person" 
+                    AdornmentColor="Color.Primary" />
+
+                <MudTextField T="string" 
+                    @bind-Value="loginModel.Password" 
+                    Label="Password" 
+                    name="Password"
+                    autocomplete="current-password"
+                    Variant="Variant.Outlined" 
+                    InputType="InputType.Password" 
+                    Class="mb-4"
+                    For="@(() => loginModel.Password)"
+                    InputMode="InputMode.text" 
+                    Adornment="Adornment.Start" 
+                    AdornmentIcon="@Icons.Material.Filled.Lock" 
+                    AdornmentColor="Color.Primary" />
+
+                <MudButton ButtonType="ButtonType.Submit" 
+                    Variant="Variant.Filled" 
+                    Color="Color.Primary" 
+                    FullWidth="true"
+                    Disabled="@isSubmitting"
+                    Class="mt-2">
+                    Login
+                </MudButton>
+
+                <MudCheckBox T="bool" 
+                    @bind-Value="loginModel.RememberMe" 
+                    Label="Remember Me" 
+                    name="RememberMe" />
+            </form>
+        </EditForm>
+    </MudPaper>
+</MudContainer>
+
+@code {
+    private LoginModel loginModel = new();
+    private EditContext editContext = null!;
+    private string? errorMessage;
+    private bool isSubmitting = false;
+
+    protected override void OnInitialized()
+    {
+        editContext = new EditContext(loginModel);
+        var uri = new Uri(Navigation.Uri);
+        var queryParams = QueryHelpers.ParseQuery(uri.Query);
+
+        if (queryParams.TryGetValue("error", out var error))
+        {
+            switch (error.ToString())
+            {
+                case "logout-failed":
+                    errorMessage = "Logout failed. Please try again.";
+                    break;
+                case "user-not-found":
+                    errorMessage = "User not found.";
+                    break;
+                case "account-locked":
+                    errorMessage = "Account is locked. Please try again later.";
+                    break;
+                case string e when e.StartsWith("Invalid input:"):
+                    errorMessage = e;
+                    break;
+                case "rate-limit":
+                    errorMessage = "Too many attempts. Try again later";
+                    break;
+                default:
+                    errorMessage = "Invalid username or password.";
+                    break;
+            }
+        }
+    }
+    private async Task HandleValidSubmit()
+    {
+        isSubmitting = true;
+        await Task.Delay(200);
+        isSubmitting = false;
+    }
+}

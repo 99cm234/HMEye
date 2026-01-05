@@ -1,0 +1,78 @@
+﻿@using Microsoft.AspNetCore.Authorization
+@using System.ComponentModel.DataAnnotations
+@rendermode InteractiveServer
+@attribute [Authorize(Roles = "Admin")]
+@inject UserService UserService
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@inject NavigationManager Navigation
+@inject ThemeService ThemeService
+@layout Components.Layout.MainLayout
+
+<MudPaper Class="pa-4">
+	<MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="@BeginAddUser" Class="ma-8">Add New User</MudButton>
+    <MudText Typo="Typo.h6" Class="mb-4">Existing Users</MudText>
+    @if (users == null)
+    {
+        <MudProgressCircular Indeterminate="true" />
+    }
+    else
+    {
+        <MudTable Items="@users" Dense="true" Breakpoint="Breakpoint.Md">
+            <HeaderContent>
+                <MudTh>Username</MudTh>
+                <MudTh>Email</MudTh>
+                <MudTh>Phone</MudTh>
+                <MudTh>Roles</MudTh>
+                <MudTh>Dark Mode</MudTh>
+                <MudTh>Theme</MudTh>
+                <MudTh>Login Expire Minutes</MudTh>
+                <MudTh>Actions</MudTh>
+            </HeaderContent>
+            <RowTemplate>
+                <MudTd DataLabel="Username"><MudText>@context.UserName</MudText></MudTd>
+                <MudTd DataLabel="Email"><MudText>@context.Email</MudText></MudTd>
+                <MudTd DataLabel="Phone Number"><MudText>@context.PhoneNumber</MudText></MudTd>
+                <MudTd DataLabel="Role"><MudText>@(userRoles.ContainsKey(context.Id) ? string.Join(", ", userRoles[context.Id]) : "N/A")</MudText></MudTd>
+                <MudTd DataLabel="Dark Mode"><MudText>@context.DarkMode</MudText></MudTd>
+                <MudTd DataLabel="Theme"><MudText>@context.Theme</MudText></MudTd>
+                <MudTd DataLabel="Login Expire Minutes"><MudText>@context.ExpireTimeSpanMinutes</MudText></MudTd>
+                <MudTd>
+                    <MudStack Row>
+                        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="@(() => BeginEdit(context))">Edit</MudButton>
+                        <MudButton Variant="Variant.Filled" Color="Color.Secondary" OnClick="@(() => DeleteUser(context.Id))" Disabled=@(context.Id == currentUser?.Id)>Delete</MudButton>
+                        <MudButton Variant="Variant.Filled" Color="Color.Dark" OnClick="@(() => BeginResetPassword(context))">Reset Password</MudButton>
+                    </MudStack>
+                </MudTd>
+            </RowTemplate>
+        </MudTable>
+    }
+</MudPaper>
+
+<AddUserDialog Visible="@showAddUserDialog"
+               VisibleChanged="@((e) => showAddUserDialog = e)"
+               Model="@newUserModel"
+               EditContext="@newUserEditContext"
+               Roles="@roles"
+               Errors="@errors"
+               Options="dialogOptions"
+               OnValidSubmit="@AddUser"
+               OnCancel="@CancelAddUser" />
+
+<EditUserDialog Visible="@showEditUserDialog"
+                VisibleChanged="@((e) => showEditUserDialog = e)"
+                Model="@editUserModel"
+                EditContext="@editUserEditContext"
+                Roles="@roles"
+                Errors="@errors"
+                Options="dialogOptions"
+                OnValidSubmit="@(() => SaveChanges(editingUserId!))"
+                OnCancel="@CancelEdit" />
+
+<ResetPasswordDialog Visible="@showResetPasswordDialog"
+                     VisibleChanged="@((e) => showResetPasswordDialog = e)"
+                     Model="@resetUserModel"
+                     EditContext="@resetPasswordEditContext"
+                     Errors="@errors"
+                     Options="dialogOptions"
+                     OnValidSubmit="@ResetPassword"
+                     OnCancel="@CancelResetPassword" />

@@ -1,0 +1,171 @@
+﻿@page "/account/profile"
+@using HMEye.DumbAuth.Models
+@attribute [Authorize]
+
+@inject UserService UserService
+@inject ThemeService ThemeService
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@rendermode InteractiveServer
+
+<MudText Typo="Typo.h5" Class="ma-4">Client Profile</MudText>
+<MudPaper Class="pa-4">
+    @if (loading)
+    {
+        <MudProgressCircular Indeterminate="true" />
+    }
+    else if (user is not null)
+    {
+        <MudList T="string" Style="max-width: 300px;">
+            <MudListItem Text="@user.UserName" Icon="@Icons.Material.Filled.Person" />
+            <MudListItem Text="@user.Email" Icon="@Icons.Material.Filled.Email" />
+            <MudListItem Text="@user.PhoneNumber" Icon="@Icons.Material.Filled.Phone" />
+            <MudListItem Text="@user.ExpireTimeSpanMinutes.ToString()" SecondaryText="login timeout minutes" Icon="@Icons.Material.Filled.Timer" />
+        </MudList>
+        <MudStack Row Class="mt-4">
+            <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="@BeginUpdateProfile">Edit Profile</MudButton>
+            <MudButton Variant="Variant.Filled" Color="Color.Secondary" OnClick="@BeginChangePassword">Change Password</MudButton>
+        </MudStack>
+    }
+    else
+    {
+        <MudAlert Severity="Severity.Warning">User not found or not authenticated.</MudAlert>
+    }
+</MudPaper>
+
+<UpdateProfileDialog Visible="@showUpdateProfileDialog"
+                     VisibleChanged="@((e) => showUpdateProfileDialog = e)"
+                     Model="@updateProfileModel"
+                     EditContext="@updateProfileEditContext"
+                     Errors="@errors"
+                     Options="dialogOptions"
+                     OnValidSubmit="@UpdateProfile"
+                     OnCancel="@CancelUpdateProfile" />
+
+<ChangePasswordDialog Visible="@showChangePasswordDialog"
+                      VisibleChanged="@((e) => showChangePasswordDialog = e)"
+                      Model="@changePasswordModel"
+                      EditContext="@changePasswordEditContext"
+                      Errors="@errors"
+                      Options="dialogOptions"
+                      OnValidSubmit="@ChangePassword"
+                      OnCancel="@CancelChangePassword" />
+
+@code {
+    private CustomUser? user;
+    private IList<string> userRoles = new List<string>();
+    private bool loading = true;
+    private bool showUpdateProfileDialog;
+    private bool showChangePasswordDialog;
+    private UpdateProfileDialog.UpdateProfileModel updateProfileModel = new();
+    private ChangePasswordDialog.ChangePasswordModel changePasswordModel = new();
+    private EditContext updateProfileEditContext = null!;
+    private EditContext changePasswordEditContext = null!;
+    private List<string> errors = new();
+    private DialogOptions dialogOptions = new()
+    {
+        CloseOnEscapeKey = true,
+        BackdropClick = true,
+        CloseButton = true,
+    };
+
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        var identityUser = authState.User;
+
+        if (identityUser.Identity?.IsAuthenticated == true)
+        {
+            var userName = identityUser.Identity.Name;
+            if (userName is not null)
+            {
+                user = await UserService.GetUserByNameAsync(userName);
+                if (user != null)
+                {
+                    userRoles = await UserService.GetRolesForUserAsync(user);
+                }
+            }
+        }
+        loading = false;
+    }
+
+    private void BeginUpdateProfile()
+    {
+        if (user != null)
+        {
+            updateProfileModel = new UpdateProfileDialog.UpdateProfileModel
+            {
+                Username = user.UserName ?? "",
+                Email = user.Email,
+                PhoneNumber = user.PhoneNumber
+            };
+            updateProfileEditContext = new EditContext(updateProfileModel);
+            showUpdateProfileDialog = true;
+        }
+    }
+
+    private async Task UpdateProfile()
+    {
+        if (user != null)
+        {
+            var (succeeded, updateErrors) = await UserService.UpdateUserAsync(
+                user.Id,
+                updateProfileModel.Email!,
+                updateProfileModel.PhoneNumber!,
+                userRoles.ToList(),
+                user.DarkMode,
+                user.Theme ?? "",
+                user.ExpireTimeSpanMinutes
+            );
+            if (succeeded)
+            {
+                user = await UserService.GetUserByNameAsync(user.UserName!);
+                showUpdateProfileDialog = false;
+                errors.Clear();
+            }
+            else
+            {
+                errors.AddRange(updateErrors);
+            }
+        }
+    }
+
+    private void CancelUpdateProfile()
+    {
+        showUpdateProfileDialog = false;
+        errors.Clear();
+    }
+
+    private void BeginChangePassword()
+    {
+        changePasswordModel = new ChangePasswordDialog.ChangePasswordModel();
+        changePasswordEditContext = new EditContext(changePasswordModel);
+        showChangePasswordDialog = true;
+    }
+
+    private async Task ChangePassword()
+    {
+        if (user != null)
+        {
+            var (succeeded, changeErrors) = await UserService.ChangeUserPasswordAsync(
+                user.UserName!,
+                changePasswordModel.CurrentPassword,
+                changePasswordModel.NewPassword
+            );
+            if (succeeded)
+            {
+                showChangePasswordDialog = false;
+                errors.Clear();
+            }
+            else
+            {
+                errors.AddRange(changeErrors);
+            }
+        }
+    }
+
+    private void CancelChangePassword()
+    {
+        showChangePasswordDialog = false;
+        errors.Clear();
+    }
+}

@@ -1,0 +1,28 @@
+﻿@using HMEye.DumbAuth.Models
+@inherits LayoutComponentBase
+@inject AuthenticationStateProvider AuthStateProvider
+@inject UserManager<CustomUser> UserManager
+@inject ThemeService ThemeService
+
+<MudThemeProvider IsDarkMode="true" />
+<MudPopoverProvider />
+<MudDialogProvider />
+<MudSnackbarProvider />
+
+<MudLayout>
+    <MudMainContent Class="pt-16 pa-4">
+        @Body
+    </MudMainContent>
+</MudLayout>
+
+<div id="blazor-error-ui" data-nosnippet>
+    An unhandled error has occurred.
+    <a href="." class="reload">Reload</a>
+    <span class="dismiss">🗙</span>
+</div>
+
+@code {
+
+}
+
+

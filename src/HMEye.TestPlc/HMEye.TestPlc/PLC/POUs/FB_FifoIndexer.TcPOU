@@ -1,0 +1,108 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1">
+  <POU Name="FB_FifoIndexer" Id="{d166dc60-92bf-4432-a19b-528d3364e3d7}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_FifoIndexer
+VAR_INPUT
+    MaxSize : UDINT;  // Set once, e.g., in init
+	EnableWrapAround : BOOL := FALSE;	// Enable wrap-around when buffer is full
+END_VAR
+VAR_OUTPUT
+END_VAR
+VAR
+    _readIndex : UDINT := 0;
+    _writeIndex : UDINT := 0;
+    _count : UDINT := 0;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[]]></ST>
+    </Implementation>
+    <Property Name="Count" Id="{e7524c59-89f9-43b3-bdac-091ca75407f8}">
+      <Declaration><![CDATA[PROPERTY Count : UDINT]]></Declaration>
+      <Get Name="Get" Id="{7175b43f-9c26-4fb2-8eda-caa1c8958d9e}">
+        <Declaration><![CDATA[VAR
+END_VAR
+]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[Count := _count;]]></ST>
+        </Implementation>
+      </Get>
+    </Property>
+    <Method Name="Dequeue" Id="{1304ba0c-e2f2-44e9-9436-d63b0b9ec44c}">
+      <Declaration><![CDATA[METHOD Dequeue : BOOL;
+VAR_INPUT
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[IF IsEmpty THEN 
+	Dequeue := FALSE; // Empty
+	RETURN;
+END_IF
+
+Dequeue := TRUE;
+_readIndex := (_readIndex + 1) MOD MaxSize;
+_count := _count - 1;]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="Enqueue" Id="{536852e1-aa18-4cf3-bfee-13736057a888}">
+      <Declaration><![CDATA[METHOD Enqueue : BOOL;
+VAR_INPUT
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[IF IsFull AND NOT EnableWrapAround THEN
+	Enqueue := FALSE; // Full
+	RETURN;
+END_IF
+
+Enqueue := TRUE;
+_writeIndex := (_writeIndex + 1) MOD MaxSize;
+_count := _count + 1;]]></ST>
+      </Implementation>
+    </Method>
+    <Property Name="IsEmpty" Id="{262bf447-955a-4423-adae-e1817d4940e8}">
+      <Declaration><![CDATA[PROPERTY IsEmpty : BOOL]]></Declaration>
+      <Get Name="Get" Id="{6f4a96bf-173f-435e-8cb4-0017ef5c0d5d}">
+        <Declaration><![CDATA[VAR
+END_VAR
+]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[IsEmpty := (_readIndex = _writeIndex) AND (_count = 0);]]></ST>
+        </Implementation>
+      </Get>
+    </Property>
+    <Property Name="IsFull" Id="{d562d59b-ee88-46ca-b8bb-26d311f7f704}">
+      <Declaration><![CDATA[PROPERTY IsFull : BOOL]]></Declaration>
+      <Get Name="Get" Id="{34e06915-e3a4-4ce6-8fe7-b0f1d8ce0412}">
+        <Declaration><![CDATA[VAR
+END_VAR
+]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[IsFull := _writeIndex = _readIndex AND _count = MaxSize;]]></ST>
+        </Implementation>
+      </Get>
+    </Property>
+    <Property Name="ReadIndex" Id="{2a58dc7d-a5ba-4338-afbe-8a860dc76c71}">
+      <Declaration><![CDATA[PROPERTY ReadIndex : UDINT]]></Declaration>
+      <Get Name="Get" Id="{b6b0c5a0-0039-407a-95dd-39d25078bafb}">
+        <Declaration><![CDATA[VAR
+END_VAR
+]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[ReadIndex := _readIndex;]]></ST>
+        </Implementation>
+      </Get>
+    </Property>
+    <Property Name="WriteIndex" Id="{ee8c5686-5e93-4042-a1e6-eaaeec5dee9c}">
+      <Declaration><![CDATA[PROPERTY WriteIndex : UDINT]]></Declaration>
+      <Get Name="Get" Id="{d1f17506-a9dc-4142-b1a2-07fd4646582b}">
+        <Declaration><![CDATA[VAR
+END_VAR
+]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[WriteIndex := _writeIndex;]]></ST>
+        </Implementation>
+      </Get>
+    </Property>
+  </POU>
+</TcPlcObject>

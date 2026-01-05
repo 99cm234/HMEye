@@ -1,0 +1,68 @@
+﻿@using DumbAuth.Models
+@using HMEye.DumbAuth.ConnectionTracking
+@using Microsoft.AspNetCore.Authorization
+@attribute [Authorize(Roles = "Admin")]
+@inject ConnectionTracker ConnectionTracker
+@inject UserSessionTracker SessionTracker
+@implements IDisposable
+
+<MudPaper Class="pa-4">
+
+	<MudText Typo="Typo.body1" Class="ma-4">Client connections: @ConnectionTracker.Count of @ConnectionTracker.Max</MudText>
+    <br/>
+	<MudTable Items="@_sessions" Dense="true" Hover="true" Bordered="true" Breakpoint="Breakpoint.Sm">
+		<HeaderContent>
+			<MudTh>Username</MudTh>
+			<MudTh>Connected</MudTh>
+			<MudTh>Session Duration</MudTh>
+			<MudTh>Disconnected At</MudTh>
+			<MudTh>IP</MudTh>
+			<MudTh>Client Hostname</MudTh>
+			<MudTh>Session ID</MudTh>
+		</HeaderContent>
+		<RowTemplate>
+			<MudTd DataLabel="Username">@context.Username</MudTd>
+			<MudTd DataLabel="Connected">@context.ConnectedAt.ToLocalTime().ToString("g")</MudTd>
+			<MudTd DataLabel="Duration">@context.Duration?.ToString(@"d' days, 'h\:mm\:ss")</MudTd>
+			<MudTd DataLabel="Disconnected">@context.DisconnectedAt?.ToLocalTime().ToString("g")</MudTd>
+			<MudTd DataLabel="IP">@context.ClientIp</MudTd>
+			<MudTd DataLabel="Hostname">@context.ClientHostName</MudTd>
+			<MudTd DataLabel="Session ID">@context.SessionId</MudTd>
+		</RowTemplate>
+	</MudTable>
+</MudPaper>
+
+@code {
+    private int _clinetCount;
+    private int _clientMaxCount;
+    private List<SessionRecord> _sessions = new();
+
+    protected override void OnInitialized()
+    {
+        _clinetCount = ConnectionTracker.Count;
+        _clientMaxCount = ConnectionTracker.Max;
+        _sessions = SessionTracker.GetAllSessions().ToList();
+        ConnectionTracker.OnCountChanged += HandleConnectionTrackerUpdated;
+        SessionTracker.OnSessionRecordChanged += HandleSessionTrackerUpdated;
+    }
+
+    private void HandleConnectionTrackerUpdated(int count, int max)
+    {
+        _clinetCount = count;
+        _clientMaxCount = max;
+        InvokeAsync(StateHasChanged);
+    }
+
+    private void HandleSessionTrackerUpdated()
+    {
+        _sessions = SessionTracker.GetAllSessions().ToList();
+        InvokeAsync(StateHasChanged);
+    }
+
+    public void Dispose()
+    {
+        ConnectionTracker.OnCountChanged -= HandleConnectionTrackerUpdated;
+        SessionTracker.OnSessionRecordChanged -= HandleSessionTrackerUpdated;
+    }
+
+}
