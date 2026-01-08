@@ -30,7 +30,6 @@ services:
     networks:
       - internal
 
-
   grafana:
     image: grafana/grafana:latest
     container_name: grafana
@@ -44,7 +43,7 @@ services:
       GF_SERVER_DOMAIN: "localhost"
       GF_SERVER_SERVE_FROM_SUB_PATH: "True"
     ports:
-      - "127.0.0.1:3333:3000"
+      - "127.0.0.1:3000:3000"
     volumes:
       - grafana_data:/var/lib/grafana
     networks:
@@ -61,26 +60,51 @@ services:
     networks:
       - internal
 
-  portainer:
-    image: portainer/portainer-ce:latest
-    container_name: portainer
-    restart: unless-stopped
+  dockpeek:
+    image: dockpeek/dockpeek:latest
+    container_name: dockpeek
+    environment:
+      - SECRET_KEY=your_secure_secret_key
+      - DISABLE_AUTH=TRUE
     ports:
-      - "9000:9000"
-      - "9443:9443"
+      - "3420:8000"
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
-      - portainer_data:/data
-    networks:
-      -  internal
+    restart: unless-stopped
+
+  dockhand:
+    image: fnsys/dockhand:latest
+    container_name: dockhand
+    restart: unless-stopped
+    user: "0:0"
+    ports:
+      - 8080:3000
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - dockhand_data:/app/data
+
+  glances:
+    image: nicolargo/glances:latest-full
+    container_name: glances
+    restart: unless-stopped
+    pid: host
+    network_mode: host  # default port 61208
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - /run/user/1000/podman/podman.sock:/run/user/1000/podman/podman.sock
+    environment:
+      - "GLANCES_OPT=-w"
+    #  - "GLANCES_OPT=-w -B 127.0.0.1"
+    #  - "GLANCES_OPT=-w -p 8080"
+    #  - "GLANCES_OPT=-w -B 127.0.0.1 -p 8080"
 
 volumes:
   postgres_data:
   pgadmin_data:  
   grafana_data:
   nodered_data:
-  portainer_data:  
-
+  portainer_data:
+  dockhand_data:
 
 networks:
   internal:
