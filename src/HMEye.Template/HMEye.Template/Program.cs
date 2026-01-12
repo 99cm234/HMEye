@@ -19,7 +19,8 @@ builder
 	.Configuration.AddJsonFile("appsettings.dumbauth.json", optional: true, reloadOnChange: true)
 	.AddJsonFile("appsettings.modbus.json", optional: true, reloadOnChange: true)
 	.AddJsonFile("appsettings.twincat.json", optional: true, reloadOnChange: true)
-	.AddJsonFile("appsettings.yarp.json", optional: true, reloadOnChange: true);
+	.AddJsonFile("appsettings.yarp.json", optional: true, reloadOnChange: true)
+	.AddJsonFile("appsettings.dumbts.json", optional: true, reloadOnChange: true);
 
 // Add MudBlazor services
 builder.Services.AddMudServices();

@@ -10,7 +10,7 @@ namespace HMEye.DumbTs;
 /// <para>CutoffDays defaults to 30 if not set.</para>
 /// <code>
 /// {
-///		"DumbTs" {
+///		"DumbTs": {
 ///			"CleanupInterval": 24,
 ///			"CutoffDays": 30
 ///		}
