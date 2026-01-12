@@ -1,3 +1,19 @@
+# Profiles:
+# - timesscale
+# - pgadmin
+# - grafana
+# - nodered
+# - dockpeek
+# - dockhand
+# - glances
+# - core:
+#     - timescale
+#     - grafana
+#     - nodered
+# - admin:
+#     - pgadmin
+#     - dockhand
+
 services:
   db:
     image: timescale/timescaledb:latest-pg16
@@ -13,6 +29,9 @@ services:
       - postgres_data:/var/lib/postgresql/data
     networks:
       - internal
+    profiles:
+      - timescale
+      - core
 
   pgadmin:
     image: dpage/pgadmin4:latest
@@ -29,6 +48,9 @@ services:
       - pgadmin_data:/var/lib/pgadmin
     networks:
       - internal
+    profiles:
+      - pgadmin
+      - admin
 
   grafana:
     image: grafana/grafana:latest
@@ -48,6 +70,9 @@ services:
       - grafana_data:/var/lib/grafana
     networks:
       - internal
+    profiles:
+      - grafana
+      - core
 
   nodered:
     image: nodered/node-red:latest
@@ -59,6 +84,9 @@ services:
       - nodered_data:/data
     networks:
       - internal
+    profiles:
+      - nodered
+      - core
 
   dockpeek:
     image: dockpeek/dockpeek:latest
@@ -71,6 +99,8 @@ services:
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
     restart: unless-stopped
+    profiles:
+      - dockpeek
 
   dockhand:
     image: fnsys/dockhand:latest
@@ -82,6 +112,9 @@ services:
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
       - dockhand_data:/app/data
+    profiles:
+      - dockhand
+      - admin
 
   glances:
     image: nicolargo/glances:latest-full
@@ -97,6 +130,8 @@ services:
     #  - "GLANCES_OPT=-w -B 127.0.0.1"
     #  - "GLANCES_OPT=-w -p 8080"
     #  - "GLANCES_OPT=-w -B 127.0.0.1 -p 8080"
+    profiles:
+      - glances
 
 volumes:
   postgres_data:
