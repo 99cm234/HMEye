@@ -121,15 +121,14 @@ services:
     container_name: glances
     restart: unless-stopped
     pid: host
-    network_mode: host  # default port 61208
+    network_mode: host
+    # ports:
+    #   - "61208:61208"
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
-      - /run/user/1000/podman/podman.sock:/run/user/1000/podman/podman.sock
+      - ./glances.conf:/glances/conf/glances.conf:ro
     environment:
-      - "GLANCES_OPT=-w"
-    #  - "GLANCES_OPT=-w -B 127.0.0.1"
-    #  - "GLANCES_OPT=-w -p 8080"
-    #  - "GLANCES_OPT=-w -B 127.0.0.1 -p 8080"
+      - "GLANCES_OPT=-w -C /glances/conf/glances.conf"
     profiles:
       - glances
 
