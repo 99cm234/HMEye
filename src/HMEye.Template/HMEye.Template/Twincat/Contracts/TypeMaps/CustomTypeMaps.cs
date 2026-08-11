@@ -1,6 +1,6 @@
-﻿using HMEye.Twincat.Contracts.Models;
+using HMEye.TwincatServices.Contracts.Models;
 
-namespace HMEye.Twincat.Contracts.TypeMaps;
+namespace HMEye.TwincatServices.Contracts.TypeMaps;
 
 public class CustomTypeMaps
 {
@@ -9,3 +9,4 @@ public class CustomTypeMaps
         { "ST_LrealDataPoint", typeof(DoubleDataPoint) },
     };
 }
+

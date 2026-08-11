@@ -1,12 +1,12 @@
-﻿using HMEye.Twincat.Cache.EventLogCache;
-using HMEye.Twincat.Cache.PlcCache;
-using HMEye.Twincat.Contracts.Models;
-using HMEye.Twincat.Endpoints;
-using HMEye.Twincat.Plc.EventLogService;
-using HMEye.Twincat.Plc.PlcService;
-using HMEye.Twincat.Plc.SystemService;
+using HMEye.TwincatServices.Cache.EventLogCache;
+using HMEye.TwincatServices.Cache.PlcCache;
+using HMEye.TwincatServices.Contracts.Models;
+using HMEye.TwincatServices.Endpoints;
+using HMEye.TwincatServices.Plc.EventLogService;
+using HMEye.TwincatServices.Plc.PlcService;
+using HMEye.TwincatServices.Plc.SystemService;
 
-namespace HMEye.Twincat
+namespace HMEye.TwincatServices
 {
 	public static class TwincatServicesExtensions
 	{
@@ -16,39 +16,39 @@ namespace HMEye.Twincat
 		)
 		{
 			services.Configure<TwincatSettings>(configuration.GetSection("TwincatSettings"));
-			services.Configure<EventLogCacheSettings>(configuration.GetSection("PlcEventCache"));
+			services.Configure<TwincatEventLogCacheSettings>(configuration.GetSection("TwincatEventCache"));
 
-			services.AddSingleton<IPlcService, PlcService>();
-			services.AddHostedService(sp => sp.GetRequiredService<IPlcService>());
+			services.AddSingleton<ITwincatService, TwincatService>();
+			services.AddHostedService(sp => sp.GetRequiredService<ITwincatService>());
 
-			services.AddSingleton<IEventLogService, EventLogService>();
-			services.AddHostedService(sp => sp.GetRequiredService<IEventLogService>());
+			services.AddSingleton<ITwincatEventLogService, TwincatEventLogService>();
+			services.AddHostedService(sp => sp.GetRequiredService<ITwincatEventLogService>());
 
-			services.AddSingleton<ISystemService, SystemService>();
-			services.AddHostedService(sp => sp.GetRequiredService<ISystemService>());
+			services.AddSingleton<ITwincatSystemService, TwincatSystemService>();
+			services.AddHostedService(sp => sp.GetRequiredService<ITwincatSystemService>());
 
-			services.AddSingleton<IEventLogCacheService, EventLogCacheService>();
-			services.AddHostedService(sp => sp.GetRequiredService<IEventLogCacheService>());
+			services.AddSingleton<ITwincatEventLogCacheService, TwincatEventLogCacheService>();
+			services.AddHostedService(sp => sp.GetRequiredService<ITwincatEventLogCacheService>());
 
-			services.AddTransient<PlcCacheConfigLoader>();
+			services.AddTransient<TwincatCacheConfigLoader>();
 
-			services.AddSingleton<IPlcCache>(sp =>
+			services.AddSingleton<ITwincatCache>(sp =>
 			{
-				var plcService = sp.GetRequiredService<IPlcService>();
-				var logger = sp.GetRequiredService<ILogger<PlcCache>>();
+				var plcService = sp.GetRequiredService<ITwincatService>();
+				var logger = sp.GetRequiredService<ILogger<TwincatCache>>();
 
-				var configLoader = sp.GetRequiredService<PlcCacheConfigLoader>();
+				var configLoader = sp.GetRequiredService<TwincatCacheConfigLoader>();
 				try
 				{
 					var configs = configLoader.CreateCacheItemConfigs().GetAwaiter().GetResult();
-					//var configs = PlcDataCacheConfigProvider.GetCacheItemConfigs();
+					//var configs = TwincatCacheConfigProvider.GetCacheItemConfigs();
 					//var configs = configs1.Concat(configs2);
-					return new PlcCache(plcService, logger, configs);
+					return new TwincatCache(plcService, logger, configs);
 				}
 				catch (OperationCanceledException ex)
 				{
 					logger.LogError(ex, "Cache configuration loading was canceled. Using empty configuration.");
-					return new PlcCache(plcService, logger, Array.Empty<PlcCacheItemConfig>());
+					return new TwincatCache(plcService, logger, Array.Empty<TwincatCacheItemConfig>());
 				}
 				catch (Exception ex)
 				{
@@ -56,15 +56,16 @@ namespace HMEye.Twincat
 					throw;
 				}
 			});
-			services.AddHostedService(sp => sp.GetRequiredService<IPlcCache>());
+			services.AddHostedService(sp => sp.GetRequiredService<ITwincatCache>());
 
 			return services;
 		}
 		public static IEndpointRouteBuilder MapTwincatEndpoints(this IEndpointRouteBuilder app)
 		{
-			app.MapPlcDataEndpoints();
+			app.MapTwincatDataEndpoints();
 
 			return app;
 		}
 	}
 }
+

@@ -5,7 +5,7 @@ using HMEye.DumbAuth;
 using HMEye.DumbTs;
 using HMEye.Extensions;
 using HMEye.ScreenWakeLock;
-using HMEye.Twincat;
+using HMEye.TwincatServices;
 using MudBlazor.Services;
 
 Env.Load();
@@ -70,3 +70,4 @@ app.MapTwincatEndpoints();
 app.MapReverseProxy();
 
 app.Run();
+

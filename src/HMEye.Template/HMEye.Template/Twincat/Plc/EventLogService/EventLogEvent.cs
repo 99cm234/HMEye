@@ -1,6 +1,6 @@
-﻿using TcEventLoggerAdsProxyLib;
+using TcEventLoggerAdsProxyLib;
 
-namespace HMEye.Twincat.Plc.EventLogService
+namespace HMEye.TwincatServices.Plc.EventLogService
 {
 	public class EventLogEvent
 	{

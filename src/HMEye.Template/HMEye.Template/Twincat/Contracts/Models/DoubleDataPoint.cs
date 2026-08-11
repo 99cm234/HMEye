@@ -1,6 +1,6 @@
-﻿using System.Runtime.InteropServices;
+using System.Runtime.InteropServices;
 
-namespace HMEye.Twincat.Contracts.Models;
+namespace HMEye.TwincatServices.Contracts.Models;
 
 [StructLayout(LayoutKind.Sequential, Pack = 0)]
 public struct DoubleDataPoint

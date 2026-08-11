@@ -1,13 +1,13 @@
-﻿@page "/"
+@page "/"
 @attribute [Authorize]
 @using System.Runtime.InteropServices
-@using HMEye.Twincat.Cache.PlcCache
-@using HMEye.Twincat.Plc.PlcService
-@using HMEye.Twincat.Contracts.Models
-@inject IPlcCache DataCache;
+@using HMEye.TwincatServices.Cache.PlcCache
+@using HMEye.TwincatServices.Plc.PlcService
+@using HMEye.TwincatServices.Contracts.Models
+@inject ITwincatCache DataCache;
 @inject ISnackbar Snackbar;
-@inject IPlcService PlcService;
-
+@inject ITwincatService PlcService;
+ 
 <PageTitle>Home</PageTitle>
 
 <MudGrid>
@@ -94,3 +94,4 @@
     }
 
 }
+

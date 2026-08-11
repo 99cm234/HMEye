@@ -1,4 +1,4 @@
-﻿namespace HMEye.Twincat.Contracts.Models
+namespace HMEye.TwincatServices.Contracts.Models
 {
 	/// <summary>
 	/// Used for TwincatServices configuration. Bind to appsettings.json or use in code.
@@ -25,3 +25,4 @@
 		public int ReconnectDelaySeconds { get; set; } = 5;
 	}
 }
+

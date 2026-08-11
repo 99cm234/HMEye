@@ -1,65 +1,65 @@
-# HMEye.Twincat
+# HMEye.TwincatServices
 
 Provides services for communicating with TwinCAT 3 using Twincat.Ads, including support for caching frequently accessed variables and arrays to optimize performance. This package simplifies interaction with TwinCAT 3 by providing a thread-safe service layer and an optional caching mechanism to reduce direct PLC calls.
 
 ## To register in Program.cs
 
-Register all services using the `AddTwincatServices` extension method, which reads `TwincatSettings` and `PlcEventCacheSettings` from `appsettings.json` and registers all services as Singleton and Hosted services.
+Register all services using the `AddTwincatServices` extension method, which reads `TwincatSettings` and `TwincatEventLogCacheSettings` from `appsettings.json` and registers all services as Singleton and Hosted services.
 
 ```csharp
 // Register TwinCAT services
 builder.Services.AddTwincatServices(builder.Configuration);
 ```
 
-## Configuring PlcCache
+## Configuring TwincatCache
 
-The `PlcDataCache` can be configured in 3 different ways.
+The `TwincatCache` can be configured in 3 different ways.
 
-1. `PlcCacheConfigProvider`: A manually defined collection of `PlcCacheItemConfig` objects that are passed to `PlcCache` on startup.
-2. `PlcCache.AddConfigItem()`: Accepts a `PlcCacheItemConfig` at any point during run and uses it to add a Cache Item.
-3. `PlcCacheConfigLoader`: Automatically scans PLC for symbols with particular custom attributes to create a collection of `PlcCacheItemConfig` objects and pass it to `PlcCache` using the same mechamism as `PlcCacheConfigProvider`. To use both config methods in one project, resulting `PlcCacheItemConfig` collections must be combined.
+1. `TwincatCacheConfigProvider`: A manually defined collection of `TwincatCacheItemConfig` objects that are passed to `TwincatCache` on startup.
+2. `TwincatCache.AddCacheItem()`: Accepts a `TwincatCacheItemConfig` at any point during run and uses it to add a Cache Item.
+3. `TwincatCacheConfigLoader`: Automatically scans PLC for symbols with particular custom attributes to create a collection of `TwincatCacheItemConfig` objects and pass it to `TwincatCache` using the same mechanism as `TwincatCacheConfigProvider`. To use both config methods in one project, resulting `TwincatCacheItemConfig` collections must be combined.
 
-If no configurations are provided in `PlcDataCacheConfigProvider`, no variables will be cached by default.
+If no configurations are provided in `TwincatCacheConfigProvider`, no variables will be cached by default.
 
-### Configuration using `PlcCacheConfigProvider.cs`
+### Configuration using `TwincatCacheConfigProvider.cs`
 
 ```csharp
-namespace HMEye.Twincat.Cache;
+namespace HMEye.TwincatServices.Cache;
 
-public static class PlcCacheConfigProvider
+public static class TwincatCacheConfigProvider
 {
-    public static IEnumerable<PlcCacheItemConfig> GetCacheItemConfigs()
+    public static IEnumerable<TwincatCacheItemConfig> GetCacheItemConfigs()
     {
         return new[]
         {
-            new PlcCacheItemConfig
+            new TwincatCacheItemConfig
             {
                 Address = "MAIN.temperature",
                 Type = typeof(float),
                 PollInterval = 2000,
                 IsReadOnly = true
             },
-            new PlcCacheItemConfig
+            new TwincatCacheItemConfig
             {
                 Address = "MAIN.counter",
                 Type = typeof(short),
                 PollInterval = 500
             },
-            new PlcCacheItemConfig
+            new TwincatCacheItemConfig
             {
                 Address = "MAIN.status",
                 Type = typeof(bool),
                 PollInterval = 100,
                 IsReadOnly = true
             },
-            new PlcCacheItemConfig
+            new TwincatCacheItemConfig
             {
                 Address = "MAIN.valuesArray",
                 Type = typeof(int[]),
                 IsArray = true,
                 PollInterval = 5000
             },
-            new PlcCacheItemConfig
+            new TwincatCacheItemConfig
             {
                 Address = "MAIN.stCustomStruct",
                 Type = typeof(CustomStruct),    // Structs can be read in type-safe fashion if struct layout is duplicated exactly.
@@ -67,7 +67,7 @@ public static class PlcCacheConfigProvider
                 IsDynamic - false,              // 
                 PollInterval = 5000,            // Arrays of custom structs can be read this way too (Type = typeof(CustomStruct[], IsArray = true,)).
             },
-            new PlcCacheItemConfig
+            new TwincatCacheItemConfig
             {
                 Address = "MAIN.stDifferentCustomStruct",
                 Type = typeof(object),  // Reads the symbol as a dynamic type. Good for when struct layout is not known,
@@ -81,26 +81,26 @@ public static class PlcCacheConfigProvider
 
 ```
 
-### Configuration using `PlcDataCache.AddConfigItem()`
+### Configuration using `TwincatCache.AddCacheItem()`
 
-`PlcCache` supports adding and removing cache items at runtime using the `AddCacheItem` and `RemoveCacheItem` methods.
+`TwincatCache` supports adding and removing cache items at runtime using the `AddCacheItem` and `RemoveCacheItem` methods.
 
-- `AddCacheItem(PlcCacheItemConfig config)` Adds a new cache item to the cache at any point during run.
+- `AddCacheItem(TwincatCacheItemConfig config)` Adds a new cache item to the cache at any point during run.
 - `RemoveCacheItem(string address)` Removes a cache item by address at any point during run.
 
 ```csharp
-var cache = serviceProvider.GetService<IPlcCache>();
+var cache = serviceProvider.GetService<ITwincatCache>();
 
-IEnumerable<PlcCacheItemConfig> configs = new List<PlcCacheItemConfig>
+IEnumerable<TwincatCacheItemConfig> configs = new List<TwincatCacheItemConfig>
 {
-    new PlcCacheItemConfig
+    new TwincatCacheItemConfig
     {
         Address = "MAIN.Count",
         Type = typeof(int),
         PollInterval = 1000,
         IsReadOnly = true
     },
-    new PlcCacheItemConfig
+    new TwincatCacheItemConfig
     {
         Address = "MAIN.StartCommand",
         Type = typeof(bool),
@@ -117,13 +117,13 @@ foreach (var config in configs)
 cache.RemoveCacheItem("MAIN.Count");
 ```
 
-### Configuration using PlcCacheConfigLoader
+### Configuration using TwincatCacheConfigLoader
 
-- Automatically generates `PlcCacheItemConfig` objects by scanning PLC for symbols with custom attributes.
+- Automatically generates `TwincatCacheItemConfig` objects by scanning PLC for symbols with custom attributes.
 - Case insensitive.
 - Symbols with `{attribute 'hmeye':='200'}` will be polled at the set `'hmeye'` interval in milliseconds.
 - Symbols with `{attribute 'hmeye'}` but no specified polling frequency will be polled every 1000 msec.
-- Symbols with `{attrubute 'IsReadOnly':='true'}` will be configured by PlcCache to disallow writing a new value.
+- Symbols with `{attrubute 'IsReadOnly':='true'}` will be configured by TwincatCache to disallow writing a new value.
 - Polling of "due" items is done every 100 milliseconds, so a symbol with a polling interval of 250 will be polled every 300 milliseconds.
 
 
@@ -178,11 +178,11 @@ stPumpStatus    : ST_Status;
 
 ## Accessing Cached PLC Operations
 
-For PLC symbols that are cached, you can use the `PlcCache` instance.
+For PLC symbols that are cached, you can use the `TwincatCache` instance.
 
 ```csharp
-@using HMEye.Twincat.Plc.PlcCache
-@inject IPlcCache DataCache;
+@using HMEye.TwincatServices.Plc.PlcCache
+@inject ITwincatCache DataCache;
 @inject ISnackbar Snackbar;
 
 @code{
@@ -211,11 +211,11 @@ For PLC symbols that are cached, you can use the `PlcCache` instance.
 
 ## Accessing Non-Cached PLC Operations
 
-For PLC operations that are not frequently accessed and not cached, you can directly use the `PlcService` instance.
+For PLC operations that are not frequently accessed and not cached, you can directly use the `ITwincatService` instance.
 
 ```csharp
-@using HMEye.Twincat.Plc.PlcService
-@inject IPlcService PlcService;
+@using HMEye.TwincatServices.Plc.PlcService
+@inject ITwincatService PlcService;
 @inject ISnackbar Snackbar;
 
 @code{
@@ -233,7 +233,7 @@ For PLC operations that are not frequently accessed and not cached, you can dire
         }
     }
 }
-
+```
 ## Appsettings.json Example
 
 ```json
@@ -245,7 +245,7 @@ For PLC operations that are not frequently accessed and not cached, you can dire
     "Timeout": 10,
     "ReconnectDelaySeconds": 10
   },
-  "PlcEventCache": {
+    "TwincatEventCache": {
     "AlarmRefreshIntervalSeconds": 2,
     "EventRefreshIntervalSeconds": 5,
     "MaxCachedEvents": 100
